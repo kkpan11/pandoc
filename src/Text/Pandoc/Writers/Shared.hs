@@ -5,7 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {- |
    Module      : Text.Pandoc.Writers.Shared
-   Copyright   : Copyright (C) 2013-2023 John MacFarlane
+   Copyright   : Copyright (C) 2013-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -38,17 +38,22 @@ module Text.Pandoc.Writers.Shared (
                      , stripLeadingTrailingSpace
                      , toSubscript
                      , toSuperscript
+                     , toSubscriptInline
+                     , toSuperscriptInline
                      , toTableOfContents
                      , endsWithPlain
                      , toLegacyTable
                      , splitSentences
                      , ensureValidXmlIdentifiers
                      , setupTranslations
+                     , isOrderedListMarker
+                     , toTaskListItem
                      )
 where
 import Safe (lastMay)
 import qualified Data.ByteString.Lazy as BL
-import Control.Monad (zipWithM)
+import Control.Monad (zipWithM, MonadPlus, mzero)
+import Data.Either (isRight)
 import Data.Aeson (ToJSON (..), encode)
 import Data.Char (chr, ord, isSpace, isLetter, isUpper)
 import Data.List (groupBy, intersperse, transpose, foldl')
@@ -61,6 +66,8 @@ import qualified Text.Pandoc.Builder as Builder
 import Text.Pandoc.CSS (cssAttributes)
 import Text.Pandoc.Definition
 import Text.Pandoc.Options
+import Text.Pandoc.Parsing (runParser, eof, defaultParserState,
+                            anyOrderedListMarker)
 import Text.DocLayout
 import Text.Pandoc.Shared (stringify, makeSections, blocksToInlines)
 import Text.Pandoc.Walk (Walkable(..))
@@ -465,6 +472,22 @@ toSubscript c
   | isSpace c = Just c
   | otherwise = Nothing
 
+toSubscriptInline :: Inline -> Maybe Inline
+toSubscriptInline Space = Just Space
+toSubscriptInline (Span attr ils) = Span attr <$> traverse toSubscriptInline ils
+toSubscriptInline (Str s) = Str . T.pack <$> traverse toSubscript (T.unpack s)
+toSubscriptInline LineBreak = Just LineBreak
+toSubscriptInline SoftBreak = Just SoftBreak
+toSubscriptInline _ = Nothing
+
+toSuperscriptInline :: Inline -> Maybe Inline
+toSuperscriptInline Space = Just Space
+toSuperscriptInline (Span attr ils) = Span attr <$> traverse toSuperscriptInline ils
+toSuperscriptInline (Str s) = Str . T.pack <$> traverse toSuperscript (T.unpack s)
+toSuperscriptInline LineBreak = Just LineBreak
+toSuperscriptInline SoftBreak = Just SoftBreak
+toSuperscriptInline _ = Nothing
+
 -- | Construct table of contents (as a bullet list) from document body.
 toTableOfContents :: WriterOptions
                   -> [Block]
@@ -626,3 +649,16 @@ setupTranslations meta = do
             "" -> pure defLang
             s  -> fromMaybe defLang <$> toLang (Just s)
   setTranslations lang
+
+-- True if the string would count as a Markdown ordered list marker.
+isOrderedListMarker :: Text -> Bool
+isOrderedListMarker xs = not (T.null xs) && (T.last xs `elem` ['.',')']) &&
+              isRight (runParser (anyOrderedListMarker >> eof)
+                       defaultParserState "" xs)
+
+toTaskListItem :: MonadPlus m => [Block] -> m (Bool, [Block])
+toTaskListItem (Plain (Str "☐":Space:ils):xs) = pure (False, Plain ils:xs)
+toTaskListItem (Plain (Str "☒":Space:ils):xs) = pure (True, Plain ils:xs)
+toTaskListItem (Para  (Str "☐":Space:ils):xs) = pure (False, Para ils:xs)
+toTaskListItem (Para  (Str "☒":Space:ils):xs) = pure (True, Para ils:xs)
+toTaskListItem _                              = mzero

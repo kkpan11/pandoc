@@ -21,6 +21,7 @@ import Text.Pandoc
 import Text.Pandoc.Writers.Shared (lookupMetaString)
 import Text.Pandoc.Citeproc (processCitations)
 import Text.Pandoc.Highlighting (lookupHighlightingStyle)
+import Text.Pandoc.Chunks (PathTemplate(..))
 import qualified Text.Pandoc.UTF8 as UTF8
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -39,12 +40,13 @@ import Text.Collate.Lang (Lang (..), parseLang)
 import System.Console.GetOpt
 import System.Environment (getProgName)
 import qualified Control.Exception as E
-import Text.Pandoc.Shared (safeStrRead, headerShift, filterIpynbOutput,
-                           eastAsianLineBreakFilter)
+import Text.Pandoc.Shared (safeStrRead)
 import Text.Pandoc.App ( IpynbOutput (..), Opt(..), defaultOpts )
 import Text.Pandoc.Builder (setMeta)
 import Text.Pandoc.Format (parseFlavoredFormat, formatName)
 import Text.Pandoc.SelfContained (makeSelfContained)
+import Text.Pandoc.Transforms (headerShift, filterIpynbOutput,
+                               eastAsianLineBreakFilter)
 import System.Exit
 import GHC.Generics (Generic)
 import Network.Wai.Middleware.Cors ( cors,
@@ -301,8 +303,8 @@ server = convertBytes
                         , readerStripComments = optStripComments opts
                         }
 
-    let writeropts =
-          def{ writerExtensions = writerExts
+    let writeropts = WriterOptions
+             { writerExtensions = writerExts
              , writerTabStop = optTabStop opts
              , writerWrapText = optWrap opts
              , writerColumns = optColumns opts
@@ -310,6 +312,8 @@ server = convertBytes
              , writerSyntaxMap = defaultSyntaxMap
              , writerVariables = optVariables opts
              , writerTableOfContents = optTableOfContents opts
+             , writerListOfFigures = optListOfFigures opts
+             , writerListOfTables = optListOfTables opts
              , writerIncremental = optIncremental opts
              , writerHTMLMathMethod = optHTMLMathMethod opts
              , writerNumberSections = optNumberSections opts
@@ -326,14 +330,22 @@ server = convertBytes
              , writerListings = optListings opts
              , writerHighlightStyle = hlStyle
              , writerSetextHeaders = optSetextHeaders opts
+             , writerListTables = optListTables opts
              , writerEpubSubdirectory = T.pack $ optEpubSubdirectory opts
              , writerEpubMetadata = T.pack <$> optEpubMetadata opts
              , writerEpubFonts = optEpubFonts opts
+             , writerEpubTitlePage    = optEpubTitlePage opts
              , writerSplitLevel = optSplitLevel opts
+             , writerChunkTemplate = maybe (PathTemplate "%s-%i.html")
+                                         PathTemplate
+                                         (optChunkTemplate opts)
              , writerTOCDepth = optTOCDepth opts
              , writerReferenceDoc = optReferenceDoc opts
              , writerReferenceLocation = optReferenceLocation opts
+             , writerFigureCaptionPosition = optFigureCaptionPosition opts
+             , writerTableCaptionPosition = optTableCaptionPosition opts
              , writerPreferAscii = optAscii opts
+             , writerLinkImages = optLinkImages opts
              }
 
     let reader = case readerSpec of

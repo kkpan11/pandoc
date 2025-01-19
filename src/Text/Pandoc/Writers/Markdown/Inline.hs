@@ -3,7 +3,7 @@
 {-# LANGUAGE ViewPatterns        #-}
 {- |
    Module      : Text.Pandoc.Writers.Markdown.Inline
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -332,14 +332,6 @@ avoidBadWraps inListItem = go . toList
   toList (Concat a b) = a : toList b
   toList x = [x]
 
-isOrderedListMarker :: Text -> Bool
-isOrderedListMarker xs = not (T.null xs) && (T.last xs `elem` ['.',')']) &&
-              isRight (runParser (anyOrderedListMarker >> eof)
-                       defaultParserState "" xs)
- where
-  isRight (Right _) = True
-  isRight (Left  _) = False
-
 -- | Convert Pandoc inline element to markdown.
 inlineToMarkdown :: PandocMonad m => WriterOptions -> Inline -> MD m (Doc Text)
 inlineToMarkdown opts (Span ("",["emoji"],kvs) [Str s]) =
@@ -514,7 +506,9 @@ inlineToMarkdown opts (Math InlineMath str) = do
             let str' = T.strip str
              in inlineToMarkdown opts
                   (Image nullAttr [Str str'] (url <> urlEncode str', str'))
-          _ | isEnabled Ext_tex_math_dollars opts ->
+          _ | isEnabled Ext_tex_math_gfm opts ->
+                return $ "$`" <> literal str <> "`$"
+            | isEnabled Ext_tex_math_dollars opts ->
                 return $ "$" <> literal str <> "$"
             | isEnabled Ext_tex_math_single_backslash opts ->
                 return $ "\\(" <> literal str <> "\\)"
@@ -539,7 +533,11 @@ inlineToMarkdown opts (Math DisplayMath str) = do
              in (\x -> blankline <> x <> blankline) `fmap`
                  inlineToMarkdown opts (Image nullAttr [Str str']
                         (url <> urlEncode str', str'))
-          _ | isEnabled Ext_tex_math_dollars opts ->
+          _ | isEnabled Ext_tex_math_gfm opts ->
+                return $ cr <> (literal "``` math"
+                             $$ literal str
+                             $$ literal "```") <> cr
+            | isEnabled Ext_tex_math_dollars opts ->
                 return $ "$$" <> literal str <> "$$"
             | isEnabled Ext_tex_math_single_backslash opts ->
                 return $ "\\[" <> literal str <> "\\]"
@@ -732,19 +730,3 @@ makeMathPlainer = walk go
   where
   go (Emph xs) = Span nullAttr xs
   go x         = x
-
-toSubscriptInline :: Inline -> Maybe Inline
-toSubscriptInline Space = Just Space
-toSubscriptInline (Span attr ils) = Span attr <$> traverse toSubscriptInline ils
-toSubscriptInline (Str s) = Str . T.pack <$> traverse toSubscript (T.unpack s)
-toSubscriptInline LineBreak = Just LineBreak
-toSubscriptInline SoftBreak = Just SoftBreak
-toSubscriptInline _ = Nothing
-
-toSuperscriptInline :: Inline -> Maybe Inline
-toSuperscriptInline Space = Just Space
-toSuperscriptInline (Span attr ils) = Span attr <$> traverse toSuperscriptInline ils
-toSuperscriptInline (Str s) = Str . T.pack <$> traverse toSuperscript (T.unpack s)
-toSuperscriptInline LineBreak = Just LineBreak
-toSuperscriptInline SoftBreak = Just SoftBreak
-toSuperscriptInline _ = Nothing

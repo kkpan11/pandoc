@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- |
    Module      : Text.Pandoc.Writers.MediaWiki
-   Copyright   : Copyright (C) 2008-2023 John MacFarlane
+   Copyright   : Copyright (C) 2008-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -117,9 +117,12 @@ blockToMediaWiki (Para inlines) = do
   tags <- asks useTags
   lev <- asks listLevel
   contents <- inlineListToMediaWiki inlines
+  let initEsc = if startsWithListMarker contents -- #9700
+                   then "\\"
+                   else ""
   return $ if tags
               then  "<p>" <> contents <> "</p>"
-              else contents <> if null lev then "\n" else ""
+              else initEsc <> contents <> if null lev then "\n" else ""
 
 blockToMediaWiki (LineBlock lns) =
   blockToMediaWiki $ linesToPara lns
@@ -1144,3 +1147,9 @@ highlightingLangs = Set.fromList [
   "yaml",
   "yaml+jinja",
   "zephir" ]
+
+startsWithListMarker :: Text -> Bool
+startsWithListMarker t =
+  case T.uncons t of
+    Nothing -> False
+    Just (c,_) -> c == '#' || c == ':' || c == ';' || c == '*'

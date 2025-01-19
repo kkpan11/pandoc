@@ -43,6 +43,7 @@ It can convert *from*
 - `tsv`
   ([TSV](https://www.iana.org/assignments/media-types/text/tab-separated-values)
   table)
+- `djot` ([Djot markup](https://djot.net))
 - `docbook` ([DocBook](https://docbook.org))
 - `docx` ([Word docx](https://en.wikipedia.org/wiki/Office_Open_XML))
 - `dokuwiki` ([DokuWiki markup](https://www.dokuwiki.org/dokuwiki))
@@ -80,11 +81,16 @@ It can convert *from*
 - `mediawiki` ([MediaWiki
   markup](https://www.mediawiki.org/wiki/Help:Formatting))
 - `man` ([roff man](https://man.cx/groff_man(7)))
+- `mdoc` ([mdoc](https://mandoc.bsd.lv/man/mdoc.7.html) manual page
+  markup)
 - `muse` ([Muse](https://amusewiki.org/library/manual))
 - `native` (native Haskell)
-- `odt` ([ODT](https://en.wikipedia.org/wiki/OpenDocument))
+- `odt` ([OpenDocument text
+  document](https://en.wikipedia.org/wiki/OpenDocument))
 - `opml` ([OPML](http://dev.opml.org/spec2.html))
 - `org` ([Emacs Org mode](https://orgmode.org))
+- `pod` (Perl’s [Plain Old
+  Documentation](https://perldoc.perl.org/perlpod))
 - `ris` ([RIS](https://en.wikipedia.org/wiki/RIS_(file_format))
   bibliography)
 - `rtf` ([Rich Text
@@ -109,10 +115,12 @@ It can convert *to*
 
 <div id="output-formats">
 
-- `asciidoc` (modern [AsciiDoc](https://www.methods.co.nz/asciidoc/) as
-  interpreted by [AsciiDoctor](https://asciidoctor.org/))
-- `asciidoc_legacy` ([AsciiDoc](https://www.methods.co.nz/asciidoc/) as
-  interpreted by
+- `ansi` (text with [ANSI escape
+  codes](https://en.wikipedia.org/wiki/ANSI_escape_code), for terminal
+  viewing)
+- `asciidoc` (modern [AsciiDoc](https://asciidoc.org/) as interpreted by
+  [AsciiDoctor](https://asciidoctor.org/))
+- `asciidoc_legacy` ([AsciiDoc](https://asciidoc.org/) as interpreted by
   [`asciidoc-py`](https://github.com/asciidoc-py/asciidoc-py)).
 - `asciidoctor` (deprecated synonym for `asciidoc`)
 - `beamer` ([LaTeX beamer](https://ctan.org/pkg/beamer) slide show)
@@ -126,6 +134,7 @@ It can convert *to*
 - `csljson` ([CSL
   JSON](https://citeproc-js.readthedocs.io/en/latest/csl-json/markup.html)
   bibliography)
+- `djot` ([Djot markup](https://djot.net))
 - `docbook` or `docbook4` ([DocBook](https://docbook.org) 4)
 - `docbook5` (DocBook 5)
 - `docx` ([Word docx](https://en.wikipedia.org/wiki/Office_Open_XML))
@@ -148,7 +157,7 @@ It can convert *to*
   markup](https://www.w3.org/TR/html-polyglot/))
 - `html4` ([XHTML](https://www.w3.org/TR/xhtml1/) 1.0 Transitional)
 - `icml` ([InDesign
-  ICML](https://wwwimages.adobe.com/www.adobe.com/content/dam/acom/en/devnet/indesign/sdk/cs6/idml/idml-cookbook.pdf))
+  ICML](https://manualzz.com/doc/9627253/adobe-indesign-cs6-idml-cookbook))
 - `ipynb` ([Jupyter
   notebook](https://nbformat.readthedocs.io/en/latest/))
 - `jats_archiving` ([JATS](https://jats.nlm.nih.gov) XML, Archiving and
@@ -178,10 +187,11 @@ It can convert *to*
 - `ms` ([roff ms](https://man.cx/groff_ms(7)))
 - `muse` ([Muse](https://amusewiki.org/library/manual))
 - `native` (native Haskell)
-- `odt` ([OpenOffice text
+- `odt` ([OpenDocument text
   document](https://en.wikipedia.org/wiki/OpenDocument))
 - `opml` ([OPML](http://dev.opml.org/spec2.html))
-- `opendocument` ([OpenDocument](http://opendocument.xml.org))
+- `opendocument` ([OpenDocument
+  XML](https://www.oasis-open.org/2021/06/16/opendocument-v1-3-oasis-standard-published/))
 - `org` ([Emacs Org mode](https://orgmode.org))
 - `pdf` ([PDF](https://www.adobe.com/pdf/))
 - `plain` (plain text)
@@ -263,7 +273,7 @@ opening a new issue.
 
 ## License
 
-© 2006-2023 John MacFarlane (jgm@berkeley.edu). Released under the
+© 2006-2024 John MacFarlane (jgm@berkeley.edu). Released under the
 [GPL](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html "GNU General Public License"),
 version 2 or greater. This software carries no warranty of any kind.
 (See COPYRIGHT for full copyright and warranty notices.)

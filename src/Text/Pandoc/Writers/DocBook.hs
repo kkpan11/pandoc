@@ -3,7 +3,7 @@
 {-# LANGUAGE PatternGuards     #-}
 {- |
    Module      : Text.Pandoc.Writers.DocBook
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -251,10 +251,9 @@ blockToDocBook opts (BlockQuote blocks) =
 blockToDocBook opts (CodeBlock (_,classes,_) str) = return $
   literal ("<programlisting" <> lang <> ">") <> cr <>
      flush (literal (escapeStringForXML str) <> cr <> literal "</programlisting>")
-    where lang  = if null langs
-                     then ""
-                     else " language=\"" <> escapeStringForXML (head langs) <>
-                          "\""
+    where lang  = case langs of
+                     [] -> ""
+                     (l:_) -> " language=\"" <> escapeStringForXML l <> "\""
           syntaxMap = writerSyntaxMap opts
           isLang l    = T.toLower l `elem` map T.toLower (languages syntaxMap)
           langsFrom s = if isLang s

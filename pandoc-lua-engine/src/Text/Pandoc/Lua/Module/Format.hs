@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- |
    Module      : Text.Pandoc.Lua.Module.Format
-   Copyright   : © 2022-2023 Albert Krewinkel
+   Copyright   : © 2022-2024 Albert Krewinkel
    License     : GPL-2.0-or-later
-   Maintainer  : Albert Krewinkel <tarleb+pandoc@moltkeplatz.de>
+   Maintainer  : Albert Krewinkel <albert+pandoc@tarleb.com>
 
 Lua module to handle pandoc templates.
 -}

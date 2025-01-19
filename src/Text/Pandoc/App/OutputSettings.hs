@@ -6,7 +6,7 @@
 {-# LANGUAGE TupleSections       #-}
 {- |
    Module      : Text.Pandoc.App
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley@edu>
@@ -18,17 +18,18 @@ Does a pandoc conversion based on command-line options.
 module Text.Pandoc.App.OutputSettings
   ( OutputSettings (..)
   , optToOutputSettings
+  , sandbox'
   ) where
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Text.DocTemplates (toVal, Context(..), Val(..))
 import qualified Control.Exception as E
 import Control.Monad
-import Control.Monad.Except (throwError)
+import Control.Monad.Except (throwError, catchError)
 import Control.Monad.Trans
 import Data.Char (toLower)
 import Data.List (find)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (catMaybes, fromMaybe)
 import Skylighting (defaultSyntaxMap)
 import Skylighting.Parser (addSyntaxDefinition, parseSyntaxDefinition)
 import System.Directory (getCurrentDirectory)
@@ -97,17 +98,9 @@ optToOutputSettings scriptingEngine opts = do
     report $ Deprecated "asciidoctor" "use asciidoc instead"
 
   let makeSandboxed pureWriter =
-          let files = maybe id (:) (optReferenceDoc opts) .
-                      maybe id (:) (optEpubMetadata opts) .
-                      maybe id (:) (optEpubCoverImage opts) .
-                      maybe id (:) (optCSL opts) .
-                      maybe id (:) (optCitationAbbreviations opts) $
-                      optEpubFonts opts ++
-                      optBibliography opts
-           in  case pureWriter of
-                 TextWriter w -> TextWriter $ \o d -> sandbox files (w o d)
-                 ByteStringWriter w ->
-                   ByteStringWriter $ \o d -> sandbox files (w o d)
+        case pureWriter of
+             TextWriter w -> TextWriter $ \o d -> sandbox' opts (w o d)
+             ByteStringWriter w -> ByteStringWriter $ \o d -> sandbox' opts (w o d)
 
   let standalone = optStandalone opts || isBinaryFormat format || pdfOutput
   let templateOrThrow = \case
@@ -118,13 +111,15 @@ optToOutputSettings scriptingEngine opts = do
           _ | not standalone -> return Nothing
           Nothing -> Just <$> getDefault
           Just tp -> do
-            -- strip off extensions
-            let tp' = case takeExtension tp of
-                        "" -> tp <.> T.unpack format
-                        _  -> tp
-            getTemplate tp'
-              >>= runWithPartials . compileTemplate tp'
-              >>= fmap Just . templateOrThrow
+            let getAndCompile fp =
+                   getTemplate fp >>= runWithPartials . compileTemplate fp >>=
+                      fmap Just . templateOrThrow
+            catchError
+              (getAndCompile tp)
+              (\e ->
+                  if null (takeExtension tp)
+                     then getAndCompile (tp <.> T.unpack format)
+                     else throwError e)
 
   (writer, writerExts, mtemplate) <-
     if "lua" `T.isSuffixOf` format
@@ -140,7 +135,7 @@ optToOutputSettings scriptingEngine opts = do
       templ <- processCustomTemplate $
                case customTemplate components of
                  Nothing -> throwError $ PandocNoTemplateError format
-                 Just t -> (runWithDefaultPartials $ compileTemplate path t) >>=
+                 Just t -> runWithDefaultPartials (compileTemplate path t) >>=
                            templateOrThrow
       return (w, wexts, templ)
     else
@@ -224,11 +219,13 @@ optToOutputSettings scriptingEngine opts = do
                       setVariableM "dzslides-core" dzcore vars
                   else return vars)
 
-  let writerOpts = def {
-          writerTemplate         = mtemplate
+  let writerOpts = WriterOptions
+        { writerTemplate         = mtemplate
         , writerVariables        = variables
         , writerTabStop          = optTabStop opts
         , writerTableOfContents  = optTableOfContents opts
+        , writerListOfFigures    = optListOfFigures opts
+        , writerListOfTables     = optListOfTables opts
         , writerHTMLMathMethod   = optHTMLMathMethod opts
         , writerIncremental      = optIncremental opts
         , writerCiteMethod       = optCiteMethod opts
@@ -238,6 +235,8 @@ optToOutputSettings scriptingEngine opts = do
         , writerExtensions       = writerExts
         , writerReferenceLinks   = optReferenceLinks opts
         , writerReferenceLocation = optReferenceLocation opts
+        , writerFigureCaptionPosition = optFigureCaptionPosition opts
+        , writerTableCaptionPosition = optTableCaptionPosition opts
         , writerDpi              = optDpi opts
         , writerWrapText         = optWrap opts
         , writerColumns          = optColumns opts
@@ -262,6 +261,7 @@ optToOutputSettings scriptingEngine opts = do
         , writerReferenceDoc     = optReferenceDoc opts
         , writerSyntaxMap        = syntaxMap
         , writerPreferAscii      = optAscii opts
+        , writerLinkImages       = optLinkImages opts
         }
   return $ OutputSettings
     { outputFormat = format
@@ -317,3 +317,17 @@ pdfWriterAndProg mWriter mEngine =
 isBinaryFormat :: T.Text -> Bool
 isBinaryFormat s =
   s `elem` ["odt","docx","epub2","epub3","epub","pptx","pdf","chunkedhtml"]
+
+-- Like 'sandbox', but computes the list of files to preserve from
+-- 'Opt'.
+sandbox' :: (PandocMonad m, MonadIO m) => Opt -> PandocPure a -> m a
+sandbox' opts = sandbox sandboxedFiles
+ where
+   sandboxedFiles = catMaybes [ optReferenceDoc opts
+                              , optEpubMetadata opts
+                              , optEpubCoverImage opts
+                              , optCSL opts
+                              , optCitationAbbreviations opts
+                              ] ++
+                    optEpubFonts opts ++
+                    optBibliography opts

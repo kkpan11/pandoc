@@ -3,10 +3,10 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {- |
    Module      : Text.Pandoc.Readers.Org.ParserState
-   Copyright   : Copyright (C) 2014-2023 Albert Krewinkel
+   Copyright   : Copyright (C) 2014-2024 Albert Krewinkel
    License     : GNU GPL, version 2 or above
 
-   Maintainer  : Albert Krewinkel <tarleb+pandoc@moltkeplatz.de>
+   Maintainer  : Albert Krewinkel <albert+pandoc@tarleb.com>
 
 Define the Org-mode parser state.
 -}

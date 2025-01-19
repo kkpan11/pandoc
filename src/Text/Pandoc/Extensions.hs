@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {- |
    Module      : Text.Pandoc.Extensions
-   Copyright   : Copyright (C) 2012-2023 John MacFarlane
+   Copyright   : Copyright (C) 2012-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -471,7 +471,9 @@ getDefaultExtensions "jats_articleauthoring" = getDefaultExtensions "jats"
 getDefaultExtensions "opml"            = pandocExtensions -- affects notes
 getDefaultExtensions "markua"          = extensionsFromList
                                           []
-getDefaultExtensions "typst"           = extensionsFromList [Ext_citations]
+getDefaultExtensions "typst"           = extensionsFromList [Ext_citations,
+                                                             Ext_smart]
+getDefaultExtensions "dokuwiki"        = extensionsFromList [Ext_smart]
 getDefaultExtensions _                 = extensionsFromList
                                           [Ext_auto_identifiers]
 
@@ -612,6 +614,7 @@ getAllExtensions f = universalExtensions <> getAll f
     , Ext_raw_tex
     , Ext_task_lists
     , Ext_literate_haskell
+    , Ext_empty_paragraphs
     ]
   getAll "beamer"          = getAll "latex"
   getAll "context"         = autoIdExtensions <>
@@ -642,7 +645,9 @@ getAllExtensions f = universalExtensions <> getAll f
   getAll "vimwiki"         = autoIdExtensions
   getAll "dokuwiki"        = autoIdExtensions <>
     extensionsFromList
-    [ Ext_tex_math_dollars ]
+    [ Ext_tex_math_dollars
+    , Ext_raw_html
+    , Ext_smart ]
   getAll "tikiwiki"        = autoIdExtensions
   getAll "rst"             = autoIdExtensions <>
     extensionsFromList
@@ -652,5 +657,6 @@ getAllExtensions f = universalExtensions <> getAll f
   getAll "mediawiki"       = autoIdExtensions <>
     extensionsFromList
     [ Ext_smart ]
-  getAll "typst"           = extensionsFromList [Ext_citations]
+  getAll "typst"           = extensionsFromList [Ext_citations, Ext_smart]
+  getAll "djot"            = extensionsFromList [Ext_sourcepos]
   getAll _                 = mempty

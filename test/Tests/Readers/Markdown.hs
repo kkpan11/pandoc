@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- |
    Module      : Tests.Readers.Markdown
-   Copyright   : © 2006-2023 John MacFarlane
+   Copyright   : © 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -208,17 +208,17 @@ tests = [ testGroup "inline code"
              | lsts <- [ [i, j, k] | i <- lists, j <- lists, k <- lists]
              ]
           <> [ "lists with newlines and indent in backticks" =:
-               T.intercalate ("\n" <> T.replicate 4 " ") (zipWith (\i (_, lt, _) -> lt <> i) lis lsts)
-               =?> let (_, _, f) = head lsts
-                   in f [plain $ code $ T.intercalate (T.replicate 5 " ") $ head lis' : zipWith (\i (_, lt, _) -> lt <> i) (tail lis') (tail lsts)]
-             | lsts <- [ [i, j, k] | i <- lists, j <- lists, k <- lists]
+               T.intercalate ("\n" <> T.replicate 4 " ") (zipWith (\i (_, lt, _) -> lt <> i) lis (l:ls))
+               =?> let (_, _, f) = l
+                   in f [plain $ code $ T.intercalate (T.replicate 5 " ") $ "text" : zipWith (\i (_, lt, _) -> lt <> i) (drop 1 lis') ls]
+             | (l:ls) <- [ [i, j, k] | i <- lists, j <- lists, k <- lists]
              ]
           <> [ "lists with blank lines and indent in backticks" =:
-               T.intercalate ("\n\n" <> T.replicate 4 " ") (zipWith (\i (_, lt, _) -> lt <> i) lis lsts)
+               T.intercalate ("\n\n" <> T.replicate 4 " ") (zipWith (\i (_, lt, _) -> lt <> i) lis (l:ls))
                <> "\n"
-               =?> let (_, _, f) = head lsts
-                   in f . pure $ (para . text $ head lis) <> bldLsts para (tail lsts) (tail lis)
-             | lsts <- [ [i, j, k] | i <- lists, j <- lists, k <- lists]
+               =?> let (_, _, f) = l
+                   in f . pure $ (para . text $ "`text") <> bldLsts para ls (drop 1 lis)
+             | (l:ls) <- [ [i, j, k] | i <- lists, j <- lists, k <- lists]
              ]
         , testGroup "emph and strong"
           [ "two strongs in emph" =:
@@ -321,10 +321,10 @@ tests = [ testGroup "inline code"
             para (link "random string" "wikilink" (str "title"))
           , test markdownGH "autolink not being a link" $
             "[[Name of page]]" =?>
-            para (link "Name of page" "wikilink" (str "Name of page"))
+            para (link "Name of page" "wikilink" (text "Name of page"))
           , test markdownGH "autolink not being a link with a square bracket" $
             "[[Name of ]page]]" =?>
-            para (link "Name of ]page" "wikilink" (str "Name of ]page"))
+            para (link "Name of ]page" "wikilink" (text "Name of ]page"))
           , test markdownGH "link with inline start should be a link" $
             "[[t`i*t_le|https://example.org]]" =?>
             para (link "https://example.org" "wikilink" (str "t`i*t_le"))
@@ -449,7 +449,7 @@ tests = [ testGroup "inline code"
                   <>
                   codeBlockWith ("",["haskell"],[]) "b"
                   <>
-                  rawBlock "html" "<div>\n\n"
+                  divWith ("",[],[]) mempty
           ]
 -- the round-trip properties frequently fail
 --        , testGroup "round trip"

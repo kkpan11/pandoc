@@ -236,6 +236,10 @@ tests = [ testGroup "document"
             "docx/overlapping_targets.docx"
             "docx/overlapping_targets.native"
           , testCompare
+            "anchor in header after anchor"
+            "docx/anchor_header_after_anchor.docx"
+            "docx/anchor_header_after_anchor.native"
+          , testCompare
             "text in shape format"
             "docx/text_in_shape_format.docx"
             "docx/text_in_shape_format.native"
@@ -297,6 +301,10 @@ tests = [ testGroup "document"
             "definition lists"
             "docx/definition_list.docx"
             "docx/definition_list.native"
+          , testCompare
+            "task lists"
+            "docx/task_list.docx"
+            "docx/task_list.native"
           , testCompare
             "custom defined lists in styles"
             "docx/german_styled_lists.docx"

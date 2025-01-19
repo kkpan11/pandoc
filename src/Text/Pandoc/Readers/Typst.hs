@@ -30,7 +30,7 @@ import Typst ( parseTypst, evaluateTypst )
 import Text.Pandoc.Error (PandocError(..))
 import Text.Pandoc.Shared (tshow, blocksToInlines)
 import Control.Monad.Except (throwError)
-import Control.Monad (MonadPlus (mplus), void, mzero, guard)
+import Control.Monad (MonadPlus (mplus), void, guard, foldM)
 import qualified Data.Foldable as F
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromMaybe)
@@ -39,17 +39,17 @@ import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Vector as V
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Walk
 import Text.Parsec
 import Text.TeXMath (writeTeX)
 import Text.TeXMath.Shared (getSpaceChars)
 import Text.Pandoc.Readers.Typst.Math (pMathMany)
-import Text.Pandoc.Readers.Typst.Parsing (pTok, ignored, chunks, getField, P,
+import Text.Pandoc.Readers.Typst.Parsing (pTok, ignored, getField, P,
                                           PState(..), defaultPState)
 import Typst.Methods (formatNumber, applyPureFunction)
 import Typst.Types
+import qualified Data.Vector as V
 
 -- import Debug.Trace
 
@@ -105,8 +105,10 @@ pInline = try $ do
           B.math . writeTeX <$> pMathMany (Seq.singleton res)
     Elt name@(Identifier tname) pos fields -> do
       labs <- sLabels <$> getState
-      labelTarget <- (do VLabel t <- getField "target" fields
-                         True <$ guard (t `elem` labs))
+      labelTarget <- (do result <- getField "target" fields
+                         case result of
+                           VLabel t | t `elem` labs -> pure True
+                           _ -> pure False)
                   <|> pure False
       if tname == "ref" && not labelTarget
          then do
@@ -233,10 +235,11 @@ blockHandlers = M.fromList
   ,("quote", \_ fields -> do
       getField "block" fields >>= guard
       body <- getField "body" fields >>= pWithContents pBlocks
-      attribution <-
-        ((\x -> B.para ("\x2104\xa0" <> x)) <$>
-          (getField "attribution" fields >>= pWithContents pInlines))
-        <|> pure mempty
+      attribution' <- getField "attribution" fields
+      attribution <- if attribution' == mempty
+                        then pure mempty
+                        else (\x -> B.para ("\x2014\xa0" <> x)) <$>
+                              (pWithContents pInlines attribution')
       pure $ B.blockQuote $ body <> attribution)
   ,("list", \_ fields -> do
       children <- V.toList <$> getField "children" fields
@@ -292,7 +295,7 @@ blockHandlers = M.fromList
       pure $ B.codeBlockWith attr txt)
   ,("parbreak", \_ _ -> pure mempty)
   ,("block", \mbident fields ->
-      B.divWith (fromMaybe "" mbident, [], [])
+      maybe id (\ident -> B.divWith (ident, [], [])) mbident
         <$> (getField "body" fields >>= pWithContents pBlocks))
   ,("place", \_ fields -> do
       ignored "parameters of place"
@@ -330,78 +333,8 @@ blockHandlers = M.fromList
         B.divWith ("", [], [("stack", repr (VDirection dir))]) $
           mconcat $
             map (B.divWith ("", [], [])) children)
-  ,("grid", \mbident fields -> do
-      children <- getField "children" fields >>= mapM (pWithContents pBlocks) . V.toList
-      (columns :: Val) <- getField "columns" fields
-      let toWidth (VFraction f) = Just (floor $ 1000 * f)
-          toWidth _ = Nothing
-      let normalizeWidths xs =
-            let givenwidths = catMaybes xs
-                (totgivenwidth :: Int) = sum givenwidths
-                avgwidth = totgivenwidth `div` length givenwidths
-                totwidth = avgwidth * length xs
-             in if null givenwidths
-                  then replicate (length xs) B.ColWidthDefault
-                  else
-                    map
-                      ( \case
-                          Just x -> B.ColWidth (fromIntegral x / fromIntegral totwidth)
-                          Nothing ->
-                            B.ColWidth (fromIntegral avgwidth / fromIntegral totwidth)
-                      )
-                      xs
-      widths <- case columns of
-        VInteger x -> pure $ replicate (fromIntegral x) B.ColWidthDefault
-        VArray x -> pure $ normalizeWidths $ map toWidth (V.toList x)
-        VNone -> pure [B.ColWidthDefault]
-        _ -> fail $ "Could not determine number of columns: " <> show columns
-      let numcols = length widths
-      align <- getField "align" fields
-      let toAlign (VAlignment (Just horiz) _) =
-            case horiz of
-              HorizStart -> B.AlignLeft
-              HorizLeft -> B.AlignLeft
-              HorizEnd -> B.AlignRight
-              HorizRight -> B.AlignRight
-              HorizCenter -> B.AlignCenter
-          toAlign _ = B.AlignDefault
-      aligns <-
-        case align of
-          VAlignment {} -> pure $ replicate numcols (toAlign align)
-          VArray v -> pure $ map toAlign (V.toList v)
-          VFunction _ _ f -> do
-            mapM
-              ( \colnum -> case applyPureFunction
-                  f
-                  [VInteger colnum, VInteger 0] of
-                  Success x -> pure $ toAlign x
-                  Failure e -> fail e
-              )
-              [0 .. (fromIntegral numcols - 1)]
-          _ -> pure $ replicate numcols B.AlignDefault
-      let colspecs = zip (aligns ++ repeat B.AlignDefault) widths
-      let rows =
-            map (B.Row B.nullAttr) $
-              chunks numcols $
-                map
-                  ( B.Cell
-                      B.nullAttr
-                      B.AlignDefault
-                      (B.RowSpan 1)
-                      (B.ColSpan 1)
-                      . B.toList
-                  )
-                  children
-      pure $
-        B.tableWith
-          (fromMaybe "" mbident, [], [])
-          (B.Caption mempty mempty)
-          colspecs
-          (B.TableHead B.nullAttr [])
-          [B.TableBody B.nullAttr 0 [] rows]
-          (B.TableFoot B.nullAttr []))
-  ,("table", \mbident fields ->
-       maybe mzero (\f -> f mbident fields) $ M.lookup "grid" blockHandlers)
+  ,("grid", \mbident fields -> parseTable mbident fields)
+  ,("table", \mbident fields -> parseTable mbident fields)
   ,("figure", \mbident fields -> do
       body <- getField "body" fields >>= pWithContents pBlocks
       (mbCaption :: Maybe (Seq Content)) <- getField "caption" fields
@@ -432,6 +365,8 @@ blockHandlers = M.fromList
               _ -> "?"
       pure $ B.plain . B.text . mconcat . map toNum $ V.toList nums)
   ,("footnote.entry", \_ fields ->
+      getField "body" fields >>= pWithContents pBlocks)
+  ,("pad", \_ fields ->  -- ignore paddingy
       getField "body" fields >>= pWithContents pBlocks)
   ]
 
@@ -503,8 +438,8 @@ inlineHandlers = M.fromList
       B.underline <$> pWithContents pInlines body)
   ,("quote", \_ fields -> do
       (getField "block" fields <|> pure False) >>= guard . not
-      body <- getField "body" fields >>= pWithContents pInlines
-      pure $ B.doubleQuoted body)
+      body <- getInlineBody fields >>= pWithContents pInlines
+      pure $ B.doubleQuoted $ B.trimInlines body)
   ,("link", \_ fields -> do
       dest <- getField "dest" fields
       src <- case dest of
@@ -567,12 +502,33 @@ inlineHandlers = M.fromList
       body <- getField "body" fields
       display <- getField "block" fields
       (if display then B.displayMath else B.math) . writeTeX <$> pMathMany body)
+  ,("pad", \_ fields ->  -- ignore paddingy
+      getField "body" fields >>= pWithContents pInlines)
+  ,("block", \mbident fields ->
+      maybe id (\ident -> B.spanWith (ident, [], [])) mbident
+        <$> (getField "body" fields >>= pWithContents pInlines))
   ]
 
+getInlineBody :: PandocMonad m => M.Map Identifier Val -> P m (Seq Content)
+getInlineBody fields =
+  parbreaksToLinebreaks <$> getField "body" fields
+
+parbreaksToLinebreaks :: Seq Content -> Seq Content
+parbreaksToLinebreaks =
+  fmap go . Seq.dropWhileL isParbreak . Seq.dropWhileR isParbreak
+ where
+   go (Elt "parbreak" pos _) = Elt "linebreak" pos mempty
+   go x = x
+   isParbreak (Elt "parbreak" _ _) = True
+   isParbreak _ = False
+
 pPara :: PandocMonad m => P m B.Blocks
-pPara =
-  B.para . B.trimInlines . collapseAdjacentCites . mconcat
-    <$> (many1 pInline <* optional pParBreak)
+pPara = do
+  ils <- B.trimInlines . collapseAdjacentCites . mconcat <$> many1 pInline
+  optional pParBreak
+  pure $ if ils == mempty
+         then mempty
+         else B.para ils
 
 pParBreak :: PandocMonad m => P m ()
 pParBreak =
@@ -594,7 +550,8 @@ pWithContents pa cs = try $ do
 
 pInlines :: PandocMonad m => P m B.Inlines
 pInlines =
-  collapseAdjacentCites . mconcat <$> many pInline
+  mappend <$> (collapseAdjacentCites . mconcat <$> many pInline)
+          <*> ((B.softbreak <$ pParBreak) <|> pure mempty)
 
 collapseAdjacentCites :: B.Inlines -> B.Inlines
 collapseAdjacentCites = B.fromList . foldr go [] . B.toList
@@ -617,3 +574,135 @@ findLabels = foldr go []
    go (Elt{ eltFields = fs }) = \ts -> foldr go' ts fs
    go' (VContent cs) = (findLabels cs ++)
    go' _ = id
+
+parseTable :: PandocMonad m
+           => Maybe Text -> M.Map Identifier Val -> P m B.Blocks
+parseTable mbident fields = do
+  children <- V.toList <$> getField "children" fields
+  (columns :: Val) <- getField "columns" fields
+  let toWidth (VFraction f) = Just (floor $ 1000 * f)
+      toWidth _ = Nothing
+  let normalizeWidths xs =
+        let givenwidths = catMaybes xs
+            (totgivenwidth :: Int) = sum givenwidths
+            avgwidth = totgivenwidth `div` length givenwidths
+            totwidth = avgwidth * length xs
+         in if null givenwidths
+              then replicate (length xs) B.ColWidthDefault
+              else
+                map
+                  ( \case
+                      Just x ->
+                        B.ColWidth (fromIntegral x / fromIntegral totwidth)
+                      Nothing ->
+                        B.ColWidth
+                        (fromIntegral avgwidth / fromIntegral totwidth)
+                  )
+                  xs
+  widths <- case columns of
+    VInteger x -> pure $ replicate (fromIntegral x) B.ColWidthDefault
+    VArray x -> pure $ normalizeWidths $ map toWidth (V.toList x)
+    VNone -> pure [B.ColWidthDefault]
+    _ -> fail $ "Could not determine number of columns: " <> show columns
+  let numcols = length widths
+  align <- getField "align" fields
+  let toAlign (VAlignment (Just horiz) _) =
+        case horiz of
+          HorizStart -> B.AlignLeft
+          HorizLeft -> B.AlignLeft
+          HorizEnd -> B.AlignRight
+          HorizRight -> B.AlignRight
+          HorizCenter -> B.AlignCenter
+      toAlign _ = B.AlignDefault
+  aligns <-
+    case align of
+      VAlignment {} -> pure $ replicate numcols (toAlign align)
+      VArray v -> pure $ map toAlign (V.toList v)
+      VFunction _ _ f -> do
+        mapM
+          ( \colnum -> case applyPureFunction
+              f
+              [VInteger colnum, VInteger 0] of
+              Success x -> pure $ toAlign x
+              Failure e -> fail e
+          )
+          [0 .. (fromIntegral numcols - 1)]
+      _ -> pure $ replicate numcols B.AlignDefault
+  let colspecs = zip (aligns ++ repeat B.AlignDefault) widths
+  let addCell' cell Nothing = addCell' cell (Just ([], []))
+      addCell' cell@(B.Cell _ _ (B.RowSpan rowspan) (B.ColSpan colspan) _)
+       (Just (freecols, revrows))  =
+        let freecols' =
+              case (rowspan + 1) - length freecols of
+                n | n < 0 -> freecols
+                  | otherwise -> freecols ++ replicate n numcols
+        in case freecols' of
+             [] -> -- should not happen
+                   error "empty freecols'"
+             x:xs
+               | colspan <= x -- there is room on current row
+                 -> let (as, bs) = splitAt rowspan (x:xs)
+                    in  Just
+                        (map (\z -> z - colspan) as ++ bs,
+                           case revrows of
+                             [] -> [[cell]]
+                             r:rs -> (cell:r):rs)
+               | otherwise ->
+                    let (as, bs) = splitAt rowspan xs
+                    in  Just (map (\z -> z - colspan) as ++ bs, [cell]:revrows)
+  let addCell tableSection cell (TableData tdata) =
+        TableData (M.alter (addCell' cell) tableSection tdata)
+  let toCell tableSection tableData contents = do
+        case contents of
+          [Elt (Identifier "grid.cell") _pos fs] -> do
+            bs <- B.toList <$> (getField "body" fs >>= pWithContents pBlocks)
+            rowspan <- getField "rowspan" fs <|> pure 1
+            colspan <- getField "colspan" fs <|> pure 1
+            align' <- (toAlign <$> getField "align" fs) <|> pure B.AlignDefault
+            pure $ addCell tableSection
+              (B.Cell B.nullAttr align' (B.RowSpan rowspan)
+                (B.ColSpan colspan) bs) tableData
+          [Elt (Identifier "table.cell") pos fs] ->
+            toCell tableSection tableData [Elt (Identifier "grid.cell") pos fs]
+          [Elt (Identifier "table.vline") _pos _fs] -> pure tableData
+          [Elt (Identifier "table.hline") _pos _fs] -> pure tableData
+          [Elt (Identifier "grid.vline") _pos _fs] -> pure tableData
+          [Elt (Identifier "grid.hline") _pos _fs] -> pure tableData
+          [Elt (Identifier "table.header") _pos fs] ->
+            getField "children" fs >>=
+              foldM (toCell THeader) tableData . V.toList
+          [Elt (Identifier "table.footer") _pos fs] ->
+            getField "children" fs >>=
+              foldM (toCell TFooter) tableData . V.toList
+          _ -> do
+            bs <- B.toList <$> pWithContents pBlocks contents
+            pure $ addCell tableSection
+              (B.Cell B.nullAttr B.AlignDefault (B.RowSpan 1) (B.ColSpan 1) bs)
+              tableData
+  tableData <- foldM (toCell TBody) (TableData mempty) children
+  let getRows tablePart = map (B.Row B.nullAttr . reverse)
+                          . maybe [] (reverse . snd)
+                          . M.lookup tablePart . unTableData
+  let headRows = getRows THeader tableData
+  let bodyRows = getRows TBody tableData
+  let footRows = getRows TFooter tableData
+  pure $
+    B.tableWith
+      (fromMaybe "" mbident, [], [])
+      (B.Caption mempty mempty)
+      colspecs
+      (B.TableHead B.nullAttr headRows)
+      [B.TableBody B.nullAttr 0 [] bodyRows]
+      (B.TableFoot B.nullAttr footRows)
+
+data TableSection = THeader | TBody | TFooter
+  deriving (Show, Ord, Eq)
+
+newtype TableData =
+  TableData { unTableData :: M.Map TableSection ([Int], [[Cell]]) }
+  deriving (Show)
+  -- for each table section, we have a pair
+  -- the first element indicates the number of column spaces left
+  -- in [currentLine, nextLine, lineAfter, etc.]
+  -- the second element is a list of rows, in reverse order,
+  -- each of which is a list of cells, in reverse order

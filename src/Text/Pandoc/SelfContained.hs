@@ -4,7 +4,7 @@
 {-# LANGUAGE TupleSections     #-}
 {- |
    Module      : Text.Pandoc.SelfContained
-   Copyright   : Copyright (C) 2011-2023 John MacFarlane
+   Copyright   : Copyright (C) 2011-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -24,7 +24,7 @@ import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.Text as T
 import Data.Char (isAlphaNum, isAscii)
-import Data.Digest.Pure.SHA (sha1, showDigest)
+import Crypto.Hash (hashWith, SHA1(SHA1))
 import Network.URI (escapeURIString)
 import System.FilePath (takeDirectory, takeExtension, (</>))
 import Text.HTML.TagSoup
@@ -52,8 +52,11 @@ makeDataURI :: (MimeType, ByteString) -> T.Text
 makeDataURI (mime, raw) =
   if textual
      then "data:" <> mime' <> "," <> T.pack (escapeURIString isOk (toString raw))
-     else "data:" <> mime' <> ";base64," <> toText (encode raw)
+     else "data:" <> mime' <> ";base64," <> toText (encode raw')
   where textual = "text/" `T.isPrefixOf` mime
+        raw' = if "+xml" `T.isSuffixOf` mime
+                  then B.filter (/= '\r') raw  -- strip off CRs
+                  else raw
         mime' = if textual && T.any (== ';') mime
                    then mime <> ";charset=utf-8"
                    else mime  -- mime type already has charset
@@ -124,7 +127,8 @@ convertTags (t@(TagOpen "link" as):ts) =
                      (("href",dataUri) : [(x,y) | (x,y) <- as, x /= "href"]) :
                      rest
                 Fetched (mime, bs)
-                  | "text/css" `T.isPrefixOf` mime
+                  | ("text/css" `T.isPrefixOf` mime ||
+                      fromAttrib "rel" t == "stylesheet")
                     && T.null (fromAttrib "media" t)
                     && not ("</" `B.isInfixOf` bs) -> do
                       rest <- convertTags $
@@ -145,8 +149,12 @@ convertTags (t@(TagOpen "link" as):ts) =
 convertTags (t@(TagOpen tagname as):ts)
   | any (isSourceAttribute tagname) as
      = do
-       as' <- mapM processAttribute as
-       let attrs = rights as'
+       let inlineSvgs = tagname == "img" &&
+                        case T.words <$> lookup "class" as of
+                          Nothing -> False
+                          Just cs -> "inline-svg" `elem` cs
+       as' <- mapM (processAttribute inlineSvgs) as
+       let attrs = addRole "img" $ addAriaLabel $ rights as'
        let svgContents = lefts as'
        rest <- convertTags ts
        case svgContents of
@@ -160,9 +168,7 @@ convertTags (t@(TagOpen tagname as):ts)
              case M.lookup hash svgmap of
                Just (svgid, svgattrs) -> do
                  let attrs' = [(k,v) | (k,v) <- combineSvgAttrs svgattrs attrs
-                                     , k /= "id"
-                                     , k /= "width"
-                                     , k /= "height"]
+                                     , k /= "id"]
                  return $ TagOpen "svg" attrs' :
                           TagOpen "use" [("href", "#" <> svgid),
                                          ("width", "100%"),
@@ -181,30 +187,37 @@ convertTags (t@(TagOpen tagname as):ts)
                                     [(k,v) | (k,v) <- attrs', k /= "id"]
                       modify $ \st ->
                         st{ svgMap = M.insert hash (svgid, attrs'') (svgMap st) }
+                      let fixUrl x =
+                            case T.breakOn "url(#" x of
+                              (_,"") -> x
+                              (before, after) -> before <>
+                                  "url(#" <> svgid <> "_" <> T.drop 5 after
                       let addIdPrefix ("id", x) = ("id", svgid <> "_" <> x)
                           addIdPrefix (k, x)
                            | k == "xlink:href" || k == "href" =
                             case T.uncons x of
                               Just ('#', x') -> (k, "#" <> svgid <> "_" <> x')
                               _ -> (k, x)
-                          addIdPrefix kv = kv
+                          -- this clause handles things like
+                          -- style="fill:url(#radialGradient46);stroke:none",
+                          -- adding the svg id prefix to the anchor:
+                          addIdPrefix (k, x) = (k, fixUrl x)
                       let ensureUniqueId (TagOpen tname ats) =
                             TagOpen tname (map addIdPrefix ats)
                           ensureUniqueId x = x
                       return $ TagOpen "svg" attrs'' :
                                  map ensureUniqueId tags' ++ rest'
                     _ -> return $ TagOpen tagname attrs : rest
-  where processAttribute (x,y) =
+  where processAttribute inlineSvgs (x,y) =
            if isSourceAttribute tagname (x,y)
               then do
                 res <- getData (fromAttrib "type" t) y
                 case res of
                   AlreadyDataURI enc -> return $ Right (x, enc)
-                  Fetched ("image/svg+xml", bs) -> do
+                  Fetched ("image/svg+xml", bs) | inlineSvgs -> do
                     -- we filter CR in the hash to ensure that Windows
                     -- and non-Windows tests agree:
-                    let hash = T.pack $ take 20 $ showDigest $
-                                        sha1 $ L.fromStrict
+                    let hash = T.pack $ take 20 $ show $ hashWith SHA1
                                              $ B.filter (/='\r') bs
                     return $ Left (hash, getSvgTags (toText bs))
                   Fetched (mt,bs) -> return $ Right (x, makeDataURI (mt,bs))
@@ -212,6 +225,20 @@ convertTags (t@(TagOpen tagname as):ts)
               else return $ Right (x,y)
 
 convertTags (t:ts) = (t:) <$> convertTags ts
+
+addRole :: T.Text -> [(T.Text, T.Text)] -> [(T.Text, T.Text)]
+addRole role attrs =
+  case lookup "role" attrs of
+    Nothing -> ("role", role) : attrs
+    Just _ -> attrs
+
+addAriaLabel :: [(T.Text, T.Text)] -> [(T.Text, T.Text)]
+addAriaLabel attrs =
+  case lookup "aria-label" attrs of
+    Just _ -> attrs
+    Nothing -> case lookup "alt" attrs of
+                 Just alt -> ("aria-label", alt) : attrs
+                 Nothing -> attrs
 
 -- we want to drop spaces, <?xml>, and comments before <svg>
 -- and anything after </svg>:
@@ -238,10 +265,13 @@ combineSvgAttrs svgAttrs imgAttrs =
   dropPointZero t = case T.stripSuffix ".0" t of
                        Nothing -> t
                        Just t' -> t'
-  combinedAttrs = imgAttrs ++
+  combinedAttrs =
+    [(k, v) | (k, v) <- imgAttrs
+            , k /= "class"] ++
     [(k, v) | (k, v) <- svgAttrs
             , isNothing (lookup k imgAttrs)
-            , k `notElem` ["xmlns", "xmlns:xlink", "version"]]
+            , k `notElem` ["xmlns", "xmlns:xlink", "version", "class"]] ++
+    mergedClasses
   parseViewBox t =
     case map (safeRead . addZero) $ T.words t of
       [Just llx, Just lly, Just urx, Just ury] -> Just (llx, lly, urx, ury)
@@ -254,6 +284,9 @@ combineSvgAttrs svgAttrs imgAttrs =
         lookup "viewBox" svgAttrs >>= parseViewBox
   (mbHeight :: Maybe Int) = lookup "height" combinedAttrs >>= safeRead
   (mbWidth :: Maybe Int) = lookup "width" combinedAttrs >>= safeRead
+  mergedClasses = case (lookup "class" imgAttrs, lookup "class" svgAttrs) of
+                    (Just c1, Just c2) -> [("class", c1 <> " " <> c2)]
+                    _ -> []
 
 cssURLs :: PandocMonad m
         => FilePath -> ByteString -> m ByteString

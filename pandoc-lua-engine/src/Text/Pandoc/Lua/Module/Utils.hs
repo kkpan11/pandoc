@@ -4,10 +4,10 @@
 {-# LANGUAGE TypeApplications    #-}
 {- |
    Module      : Text.Pandoc.Lua.Module.Utils
-   Copyright   : Copyright © 2017-2023 Albert Krewinkel
+   Copyright   : Copyright © 2017-2024 Albert Krewinkel
    License     : GNU GPL, version 2 or above
 
-   Maintainer  : Albert Krewinkel <tarleb+pandoc@moltkeplatz.de>
+   Maintainer  : Albert Krewinkel <albert+pandoc@tarleb.com>
    Stability   : alpha
 
 Utility module for Lua, exposing internal helper functions.
@@ -19,6 +19,7 @@ module Text.Pandoc.Lua.Module.Utils
 
 import Control.Applicative ((<|>))
 import Control.Monad ((<$!>))
+import Crypto.Hash (hashWith, SHA1(SHA1))
 import Data.Data (showConstr, toConstr)
 import Data.Default (def)
 import Data.Maybe (fromMaybe)
@@ -29,12 +30,11 @@ import Text.Pandoc.Citeproc (getReferences, processCitations)
 import Text.Pandoc.Definition
 import Text.Pandoc.Error (PandocError)
 import Text.Pandoc.Filter (applyJSONFilter)
+import Text.Pandoc.Lua.Filter (runFilterFile')
 import Text.Pandoc.Lua.Marshal.AST
 import Text.Pandoc.Lua.Marshal.Reference
 import Text.Pandoc.Lua.PandocLua (PandocLua (unPandocLua))
 
-import qualified Data.Digest.Pure.SHA as SHA
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Text.Pandoc.Builder as B
@@ -53,15 +53,16 @@ documentedModule = Module
   , moduleFields = []
   , moduleOperations = []
   , moduleTypeInitializers = []
-  , moduleFunctions = -- FIXME: order alphabetically
+  , moduleFunctions =
     [ blocks_to_inlines `since` v[2,2,3]
     , citeproc          `since` v[2,19,1]
     , equals            `since` v[2,5]
     , from_simple_table `since` v[2,11]
     , make_sections     `since` v[2,8]
+    , normalize_date    `since` v[2,0,6]
     , references        `since` v[2,17]
     , run_json_filter   `since` v[2,1,1]
-    , normalize_date    `since` v[2,0,6]
+    , run_lua_filter    `since` v[3,2,1]
     , sha1              `since` v[2,0,6]
     , stringify         `since` v[2,0,6]
     , to_roman_numeral  `since` v[2,0,6]
@@ -246,6 +247,39 @@ references = defun "references"
   , "    end"
   ]
 
+-- | Run a filter from a file.
+run_lua_filter :: DocumentedFunction PandocError
+run_lua_filter = defun "run_lua_filter"
+  ### (\doc fp mbenv -> do
+         envIdx <- maybe copyOfGlobalTable pure mbenv
+         runFilterFile' envIdx fp doc)
+  <#> parameter peekPandoc "Pandoc" "doc" "the Pandoc document to filter"
+  <#> parameter peekString "string" "filter" "filepath of the filter to run"
+  <#> opt (parameter (typeChecked "table" istable pure) "table" "env"
+            "environment to load and run the filter in")
+  =#> functionResult pushPandoc "Pandoc" "filtered document"
+  #? ( "Filter the given doc by passing it through a Lua filter." <>
+       "\n\nThe filter will be run in the current Lua process." <>
+       "\n"
+     )
+  where
+    copynext :: LuaError e => StackIndex -> LuaE e StackIndex
+    copynext to =
+      Lua.next (nth 2) >>= \case
+        False -> pure to
+        True -> do
+          pushvalue (nth 2)
+          insert (nth 2)
+          rawset to
+          copynext to
+    copyOfGlobalTable :: LuaError e => LuaE e StackIndex
+    copyOfGlobalTable = do
+      newtable
+      pushglobaltable
+      pushnil
+      (copynext =<< absindex (nth 3)) <* pop 1 -- pop source table
+
+-- | Process the document with a JSON filter.
 run_json_filter :: DocumentedFunction PandocError
 run_json_filter = defun "run_json_filter"
   ### (\doc filterPath margs -> do
@@ -266,8 +300,8 @@ run_json_filter = defun "run_json_filter"
 -- | Documented Lua function to compute the hash of a string.
 sha1 :: DocumentedFunction e
 sha1 = defun "sha1"
-  ### liftPure (SHA.showDigest . SHA.sha1)
-  <#> parameter (fmap BSL.fromStrict . peekByteString) "string" "input" ""
+  ### liftPure (show . hashWith SHA1)
+  <#> parameter peekByteString "string" "input" ""
   =#> functionResult pushString "string" "hexadecimal hash value"
   #? "Computes the SHA1 hash of the given string input."
 
@@ -282,7 +316,11 @@ stringify = defun "stringify"
          [ (fmap Shared.stringify . peekPandoc)
          , (fmap Shared.stringify . peekInline)
          , (fmap Shared.stringify . peekBlock)
+         , (fmap Shared.stringify . peekCaption)
+         , (fmap Shared.stringify . peekCell)
          , (fmap Shared.stringify . peekCitation)
+         , (fmap Shared.stringify . peekTableHead)
+         , (fmap Shared.stringify . peekTableFoot)
          , (fmap stringifyMetaValue . peekMetaValue)
          , (fmap (const "") . peekAttr)
          , (fmap (const "") . peekListAttributes)
@@ -369,10 +407,12 @@ type' = defun "type"
   , "function."
   , ""
   , "Usage:"
+  , ""
   , "    -- Prints one of 'string', 'boolean', 'Inlines', 'Blocks',"
   , "    -- 'table', and 'nil', corresponding to the Haskell constructors"
   , "    -- MetaString, MetaBool, MetaInlines, MetaBlocks, MetaMap,"
   , "    -- and an unset value, respectively."
+  , ""
   , "    function Meta (meta)"
   , "      print('type of metavalue `author`:', pandoc.utils.type(meta.author))"
   , "    end"

@@ -40,11 +40,9 @@ to small caps:
 
 ``` lua
 return {
-  {
-    Strong = function (elem)
-      return pandoc.SmallCaps(elem.content)
-    end,
-  }
+  Strong = function (elem)
+    return pandoc.SmallCaps(elem.content)
+  end,
 }
 ```
 
@@ -187,7 +185,7 @@ local filter = {
   traverse = 'topdown',
   -- ... filter functions ...
 }
-return {filter}
+return filter
 ```
 
 Support for this was added in pandoc 2.17; previous versions
@@ -424,7 +422,7 @@ its dependency
 install by adding `path.lua = "/path/to/your/lua"` in your ZeroBrane
 settings file. Next, open your Lua filter in ZeroBrane, and add
 `require('mobdebug').start()` at the line where you want your
-breakpoint. Then make sure the Project > Lua Intepreter is set to the
+breakpoint. Then make sure the Project > Lua Interpreter is set to the
 "Lua" you added in settings and enable "Start Debugger Server" [see
 detailed instructions
 here](https://studio.zerobrane.com/doc-remote-debugging). Run Pandoc
@@ -1029,7 +1027,7 @@ Usage:
 A block quote element.
 
 Values of this type can be created with the
-[`pandoc.BlockQuote`](#pandoc.blockquote) constructor.
+[`pandoc.BlockQuote`](#pandoc.BlockQuote) constructor.
 
 Fields:
 
@@ -1044,7 +1042,7 @@ Fields:
 A bullet list.
 
 Values of this type can be created with the
-[`pandoc.BulletList`](#pandoc.bulletlist) constructor.
+[`pandoc.BulletList`](#pandoc.BulletList) constructor.
 
 Fields:
 
@@ -1059,7 +1057,7 @@ Fields:
 Block of code.
 
 Values of this type can be created with the
-[`pandoc.CodeBlock`](#pandoc.codeblock) constructor.
+[`pandoc.CodeBlock`](#pandoc.CodeBlock) constructor.
 
 Fields:
 
@@ -1086,7 +1084,7 @@ Fields:
 Definition list, containing terms and their explanation.
 
 Values of this type can be created with the
-[`pandoc.DefinitionList`](#pandoc.definitionlist) constructor.
+[`pandoc.DefinitionList`](#pandoc.DefinitionList) constructor.
 
 Fields:
 
@@ -1101,7 +1099,7 @@ Fields:
 Generic block container with attributes.
 
 Values of this type can be created with the
-[`pandoc.Div`](#pandoc.div) constructor.
+[`pandoc.Div`](#pandoc.Div) constructor.
 
 Fields:
 
@@ -1129,7 +1127,7 @@ Fields:
 Figure with caption and arbitrary block contents.
 
 Values of this type can be created with the
-[`pandoc.Figure`](#pandoc.figure) constructor.
+[`pandoc.Figure`](#pandoc.Figure) constructor.
 
 Fields:
 
@@ -1159,7 +1157,7 @@ Fields:
 Creates a header element.
 
 Values of this type can be created with the
-[`pandoc.Header`](#pandoc.header) constructor.
+[`pandoc.Header`](#pandoc.Header) constructor.
 
 Fields:
 
@@ -1190,7 +1188,7 @@ Fields:
 A horizontal rule.
 
 Values of this type can be created with the
-[`pandoc.HorizontalRule`](#pandoc.horizontalrule) constructor.
+[`pandoc.HorizontalRule`](#pandoc.HorizontalRule) constructor.
 
 Fields:
 
@@ -1203,7 +1201,7 @@ A line block, i.e. a list of lines, each separated from the next
 by a newline.
 
 Values of this type can be created with the
-[`pandoc.LineBlock`](#pandoc.lineblock) constructor.
+[`pandoc.LineBlock`](#pandoc.LineBlock) constructor.
 
 Fields:
 
@@ -1218,7 +1216,7 @@ Fields:
 An ordered list.
 
 Values of this type can be created with the
-[`pandoc.OrderedList`](#pandoc.orderedlist) constructor.
+[`pandoc.OrderedList`](#pandoc.OrderedList) constructor.
 
 Fields:
 
@@ -1245,7 +1243,7 @@ Fields:
 A paragraph.
 
 Values of this type can be created with the
-[`pandoc.Para`](#pandoc.para) constructor.
+[`pandoc.Para`](#pandoc.Para) constructor.
 
 Fields:
 
@@ -1260,7 +1258,7 @@ Fields:
 Plain text, not a paragraph.
 
 Values of this type can be created with the
-[`pandoc.Plain`](#pandoc.plain) constructor.
+[`pandoc.Plain`](#pandoc.Plain) constructor.
 
 Fields:
 
@@ -1275,7 +1273,7 @@ Fields:
 Raw content of a specified format.
 
 Values of this type can be created with the
-[`pandoc.RawBlock`](#pandoc.rawblock) constructor.
+[`pandoc.RawBlock`](#pandoc.RawBlock) constructor.
 
 Fields:
 
@@ -1293,7 +1291,7 @@ Fields:
 A table.
 
 Values of this type can be created with the
-[`pandoc.Table`](#pandoc.table) constructor.
+[`pandoc.Table`](#pandoc.Table) constructor.
 
 Fields:
 
@@ -1435,7 +1433,7 @@ Usage:
 Citation.
 
 Values of this type can be created with the
-[`pandoc.Cite`](#pandoc.cite) constructor.
+[`pandoc.Cite`](#pandoc.Cite) constructor.
 
 Fields:
 
@@ -1453,7 +1451,7 @@ Fields:
 Inline code
 
 Values of this type can be created with the
-[`pandoc.Code`](#pandoc.code) constructor.
+[`pandoc.Code`](#pandoc.Code) constructor.
 
 Fields:
 
@@ -1480,7 +1478,7 @@ Fields:
 Emphasized text
 
 Values of this type can be created with the
-[`pandoc.Emph`](#pandoc.emph) constructor.
+[`pandoc.Emph`](#pandoc.Emph) constructor.
 
 Fields:
 
@@ -1495,7 +1493,7 @@ Fields:
 Image: alt text (list of inlines), target
 
 Values of this type can be created with the
-[`pandoc.Image`](#pandoc.image) constructor.
+[`pandoc.Image`](#pandoc.Image) constructor.
 
 Fields:
 
@@ -1528,7 +1526,7 @@ Fields:
 Hard line break
 
 Values of this type can be created with the
-[`pandoc.LineBreak`](#pandoc.linebreak) constructor.
+[`pandoc.LineBreak`](#pandoc.LineBreak) constructor.
 
 Fields:
 
@@ -1540,7 +1538,7 @@ Fields:
 Hyperlink: alt text (list of inlines), target
 
 Values of this type can be created with the
-[`pandoc.Link`](#pandoc.link) constructor.
+[`pandoc.Link`](#pandoc.Link) constructor.
 
 Fields:
 
@@ -1573,7 +1571,7 @@ Fields:
 TeX math (literal)
 
 Values of this type can be created with the
-[`pandoc.Math`](#pandoc.math) constructor.
+[`pandoc.Math`](#pandoc.Math) constructor.
 
 Fields:
 
@@ -1593,7 +1591,7 @@ Fields:
 Footnote or endnote
 
 Values of this type can be created with the
-[`pandoc.Note`](#pandoc.note) constructor.
+[`pandoc.Note`](#pandoc.Note) constructor.
 
 Fields:
 
@@ -1608,7 +1606,7 @@ Fields:
 Quoted text
 
 Values of this type can be created with the
-[`pandoc.Quoted`](#pandoc.quoted) constructor.
+[`pandoc.Quoted`](#pandoc.Quoted) constructor.
 
 Fields:
 
@@ -1627,7 +1625,7 @@ Fields:
 Raw inline
 
 Values of this type can be created with the
-[`pandoc.RawInline`](#pandoc.rawinline) constructor.
+[`pandoc.RawInline`](#pandoc.RawInline) constructor.
 
 Fields:
 
@@ -1645,7 +1643,7 @@ Fields:
 Small caps text
 
 Values of this type can be created with the
-[`pandoc.SmallCaps`](#pandoc.smallcaps) constructor.
+[`pandoc.SmallCaps`](#pandoc.Smallcaps) constructor.
 
 Fields:
 
@@ -1660,7 +1658,7 @@ Fields:
 Soft line break
 
 Values of this type can be created with the
-[`pandoc.SoftBreak`](#pandoc.softbreak) constructor.
+[`pandoc.SoftBreak`](#pandoc.Softbreak) constructor.
 
 Fields:
 
@@ -1672,7 +1670,7 @@ Fields:
 Inter-word space
 
 Values of this type can be created with the
-[`pandoc.Space`](#pandoc.space) constructor.
+[`pandoc.Space`](#pandoc.Space) constructor.
 
 Fields:
 
@@ -1684,7 +1682,7 @@ Fields:
 Generic inline container with attributes
 
 Values of this type can be created with the
-[`pandoc.Span`](#pandoc.span) constructor.
+[`pandoc.Span`](#pandoc.Span) constructor.
 
 Fields:
 
@@ -1711,7 +1709,7 @@ Fields:
 Text
 
 Values of this type can be created with the
-[`pandoc.Str`](#pandoc.str) constructor.
+[`pandoc.Str`](#pandoc.Str) constructor.
 
 Fields:
 
@@ -1726,7 +1724,7 @@ Fields:
 Strikeout text
 
 Values of this type can be created with the
-[`pandoc.Strikeout`](#pandoc.strikeout) constructor.
+[`pandoc.Strikeout`](#pandoc.Strikeout) constructor.
 
 Fields:
 
@@ -1741,7 +1739,7 @@ Fields:
 Strongly emphasized text
 
 Values of this type can be created with the
-[`pandoc.Strong`](#pandoc.strong) constructor.
+[`pandoc.Strong`](#pandoc.Strong) constructor.
 
 Fields:
 
@@ -1756,7 +1754,7 @@ Fields:
 Subscripted text
 
 Values of this type can be created with the
-[`pandoc.Subscript`](#pandoc.subscript) constructor.
+[`pandoc.Subscript`](#pandoc.Subscript) constructor.
 
 Fields:
 
@@ -1771,7 +1769,7 @@ Fields:
 Superscripted text
 
 Values of this type can be created with the
-[`pandoc.Superscript`](#pandoc.superscript) constructor.
+[`pandoc.Superscript`](#pandoc.Superscript) constructor.
 
 Fields:
 
@@ -1786,7 +1784,7 @@ Fields:
 Underlined text
 
 Values of this type can be created with the
-[`pandoc.Underline`](#pandoc.underline) constructor.
+[`pandoc.Underline`](#pandoc.Underline) constructor.
 
 Fields:
 
@@ -1824,7 +1822,7 @@ values:
 
 Applies a Lua filter to the Inlines list. Just as for
 full-document filters, the order in which elements are handled
-are are Inline → Inlines → Block → Blocks. The filter is applied
+are Inline → Inlines → Block → Blocks. The filter is applied
 to all list items *and* to the list itself. Returns a (deep)
 copy on which the filter has been applied: the original list is
 left untouched.
@@ -1855,7 +1853,7 @@ Usage:
 ### Attr {#type-attr}
 
 A set of element attributes. Values of this type can be created
-with the [`pandoc.Attr`](#pandoc.attr) constructor. For
+with the [`pandoc.Attr`](#pandoc.Attr) constructor. For
 convenience, it is usually not necessary to construct the value
 directly if it is part of an element, and it is sufficient to
 pass an HTML-like table. E.g., to create a span with identifier
@@ -1981,7 +1979,7 @@ components:
 List attributes
 
 Values of this type can be created with the
-[`pandoc.ListAttributes`](#pandoc.listattributes) constructor.
+[`pandoc.ListAttributes`](#pandoc.ListAttributes) constructor.
 
 Fields:
 
@@ -2287,6 +2285,25 @@ lines are equivalent:
 test = pandoc.layout.quotes(pandoc.layout.literal 'this')
 test = pandoc.layout.quotes('this')
 ```
+### Operators {#type-doc-operators}
+
+#### `..` {#type-doc.__concat}
+
+Concatenate two `Doc` elements.
+
+#### `+` {#type-doc.__add}
+
+Concatenate two `Doc`s, inserting a reflowable space between them.
+
+#### `/` {#type-doc.__div}
+
+If `a` and `b` are `Doc` elements, then `a / b` puts `a` above `b`.
+
+#### `//` {#type-doc.__idiv}
+
+If `a` and `b` are `Doc` elements, then `a // b` puts `a` above
+`b`, inserting a blank line between them.
+
 
 ## List {#type-list}
 
@@ -2359,7 +2376,7 @@ Comparisons are performed element-wise, i.e.
     Version '1.12' > Version '1.9'
 
 Values of this type can be created with the
-[`pandoc.types.Version`](#pandoc.types.version) constructor.
+[`pandoc.types.Version`](#pandoc.types.Version) constructor.
 
 ### `must_be_at_least`
 
@@ -2391,23 +2408,14 @@ Usage:
       'pandoc-types is too old: expected version %s, got %s'
     )
 
-[Alignment]: #type-alignment
-[Attr]: #type-attr
 [Attributes]: #type-attributes
-[Block]: #type-block
-[Blocks]: #type-blocks
-[Caption]: #type-caption
-[Cell]: #type-cell
 [Cells]: #type-cell
 [Citation]: #type-citation
 [Citations]: #type-citation
 [ColSpec]: #type-colspec
 [CommonState]: #type-commonstate
 [Div]: #type-div
-[Figure]: #type-figure
 [Image]: #type-image
-[Inline]: #type-inline
-[Inlines]: #type-inlines
 [List]: #type-list
 [ListAttributes]: #type-listattributes
 [Meta]: #type-meta
@@ -2418,13 +2426,8 @@ Usage:
 [Pandoc]: #type-pandoc
 [Para]: #type-para
 [Plain]: #type-plain
-[Row]: #type-row
 [Rows]: #type-row
 [SimpleTable]: #type-simpletable
-[Table]: #type-table
-[TableBody]: #type-tablebody
-[TableFoot]: #type-tablefoot
-[TableHead]: #type-tablehead
 [Version]: #type-version
 
 ## Chunk {#type-chunk}
@@ -2490,799 +2493,935 @@ Fields:
 `toc`
 :   table of contents information (table)
 
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc -->
+
 # Module pandoc
 
 Fields and functions for pandoc scripts; includes constructors for
-document tree elements, functions to parse text in a given
-format, and functions to filter and modify a subtree.
+document tree elements, functions to parse text in a given format,
+and functions to filter and modify a subtree.
 
-## Static Fields {#pandoc.fields}
+## Fields {#pandoc-fields}
 
 ### readers {#pandoc.readers}
 
 Set of formats that pandoc can parse. All keys in this table can
-be used as the `format` value in `pandoc.read`.
+be used as the `format` value in `pandoc.read`. (table)
 
 ### writers {#pandoc.writers}
 
 Set of formats that pandoc can generate. All keys in this table
-can be used as the `format` value in `pandoc.write`.
+can be used as the `format` value in `pandoc.write`. (table)
 
-## Pandoc
+## Functions {#pandoc-functions}
 
-### `Pandoc (blocks[, meta])` {#pandoc.pandoc}
+### Pandoc {#pandoc.Pandoc}
 
-A complete pandoc document
+`Pandoc (blocks[, meta])`
 
 Parameters:
 
 `blocks`
-:   document content
+:   document contents ([Blocks])
 
 `meta`
-:   document meta data
+:   document metadata ([Meta])
 
-Returns: [Pandoc] object
+Returns:
 
-## Meta
+-   new Pandoc document ([Pandoc])
 
-### `Meta (table)` {#pandoc.meta}
+### Meta {#pandoc.Meta}
 
-Create a new Meta object.
-
-Parameters:
-
-`table`
-:   table containing document meta information
-
-Returns: [Meta] object
-
-## MetaValue
-
-### `MetaBlocks (blocks)` {#pandoc.metablocks}
-
-Creates a value to be used as a MetaBlocks value in meta
-data; creates a copy of the input list via `pandoc.Blocks`,
-discarding all non-list keys.
+`Meta (meta)`
 
 Parameters:
 
-`blocks`
-:   blocks
+`meta`
+:   table containing meta information (table)
 
-Returns: [Blocks][]
+Returns:
 
-### `MetaInlines (inlines)` {#pandoc.metainlines}
+-   new Meta table (table)
 
-Creates a value to be used as a MetaInlines value in meta
-data; creates a copy of the input list via `pandoc.Inlines`,
-discarding all non-list keys.
+### MetaBlocks {#pandoc.MetaBlocks}
+
+`MetaBlocks (content)`
+
+Creates a value to be used as a MetaBlocks value in meta data;
+creates a copy of the input list via `pandoc.Blocks`, discarding
+all non-list keys.
+
+Parameters:
+
+`content`
+:   block content ([Blocks])
+
+Returns:
+
+-   list of Block elements ([Blocks])
+
+### MetaBool {#pandoc.MetaBool}
+
+`MetaBool (bool)`
+
+Parameters:
+
+`bool`
+:   true or false (boolean)
+
+Returns:
+
+-   input, unchanged (boolean)
+
+### MetaInlines {#pandoc.MetaInlines}
+
+`MetaInlines (inlines)`
+
+Creates a value to be used as a MetaInlines value in meta data;
+creates a copy of the input list via `pandoc.Inlines`, discarding
+all non-list keys.
 
 Parameters:
 
 `inlines`
-:   inlines
+:   inline elements ([Inlines])
 
-Returns: [Inlines][]
+Returns:
 
-### `MetaList (meta_values)` {#pandoc.metalist}
+-   list of Inline elements ([Inlines])
 
-Creates a value to be used as a MetaList in meta data;
-creates a copy of the input list via `pandoc.List`,
-discarding all non-list keys.
+### MetaList {#pandoc.MetaList}
+
+`MetaList (values)`
+
+Creates a value to be used as a MetaList in meta data; creates a
+copy of the input list via `pandoc.List`, discarding all non-list
+keys.
 
 Parameters:
 
-`meta_values`
-:   list of meta values
+`values`
+:   value, or list of values ([MetaValue]\|{[MetaValue],\...})
 
-Returns: [List]
+Returns:
 
-### `MetaMap (key_value_map)` {#pandoc.metamap}
+-   list of meta values ([List]{unknown-type="List"})
 
-Creates a value to be used as a MetaMap in meta data; creates
-a copy of the input table, keeping only pairs with string
-keys and discards all other keys.
+### MetaMap {#pandoc.MetaMap}
+
+`MetaMap (key_value_map)`
+
+Creates a value to be used as a MetaMap in meta data; creates a
+copy of the input table, keeping only pairs with string keys and
+discards all other keys.
 
 Parameters:
 
 `key_value_map`
-:   a string-indexed map of meta values
+:   a string-indexed map of meta values (table)
 
-Returns: table
+Returns:
 
-### `MetaString (str)` {#pandoc.metastring}
+-   map of meta values (table)
 
-Creates a value to be used as a MetaString in meta data; this
-is the identity function for boolean values and exists only
-for completeness.
+### MetaString {#pandoc.MetaString}
 
-Parameters:
+`MetaString (s)`
 
-`str`
-:   string value
-
-Returns: string
-
-### `MetaBool (bool)` {#pandoc.metabool}
-
-Creates a value to be used as MetaBool in meta data; this is
+Creates a value to be used as a MetaString in meta data; this is
 the identity function for boolean values and exists only for
 completeness.
 
 Parameters:
 
-`bool`
-:   boolean value
+`s`
+:   string value (string)
 
-Returns: boolean
+Returns:
 
-## Block
+-   unchanged input (string)
 
-### `BlockQuote (content)` {#pandoc.blockquote}
+### BlockQuote {#pandoc.BlockQuote}
+
+`BlockQuote (content)`
 
 Creates a block quote element
 
 Parameters:
 
 `content`
-:   block content
+:   block content ([Blocks])
 
-Returns: [BlockQuote] object
+Returns:
 
-### `BulletList (items)` {#pandoc.bulletlist}
+-   BlockQuote element ([Block])
+
+### BulletList {#pandoc.BulletList}
+
+`BulletList (items)`
 
 Creates a bullet list.
 
 Parameters:
 
 `items`
-:   list items
+:   list items ({[Blocks],\...})
 
-Returns: [BulletList] object
+Returns:
 
-### `CodeBlock (text[, attr])` {#pandoc.codeblock}
+-   BulletList element ([Block])
 
-Creates a code block element
+### CodeBlock {#pandoc.CodeBlock}
+
+`CodeBlock (text[, attr])`
+
+Creates a code block element.
 
 Parameters:
 
 `text`
-:   code string
+:   code string (string)
 
 `attr`
-:   element attributes
+:   element attributes ([Attr])
 
-Returns: [CodeBlock] object
+Returns:
 
-### `DefinitionList (content)` {#pandoc.definitionlist}
+-   CodeBlock element ([Block])
 
-Creates a definition list, containing terms and their
-explanation.
+### DefinitionList {#pandoc.DefinitionList}
+
+`DefinitionList (content)`
+
+Creates a definition list, containing terms and their explanation.
 
 Parameters:
 
 `content`
-:   list of items
+:   definition items ([{{Inlines,
+    {Blocks,\...}},\...}]{unknown-type="{{Inlines, {Blocks,...}},...}"})
 
-Returns: [DefinitionList] object
+Returns:
 
-### `Div (content[, attr])` {#pandoc.div}
+-   DefinitionList element ([Block])
+
+### Div {#pandoc.Div}
+
+`Div (content[, attr])`
 
 Creates a div element
 
 Parameters:
 
 `content`
-:   block content
+:   block content ([Blocks])
 
 `attr`
-:   element attributes
+:   element attributes ([Attr])
 
-Returns: [Div] object
+Returns:
 
-### `Figure (content[, caption[, attr]])` {#pandoc.figure}
+-   Div element ([Block])
 
-Creates a [Figure][] element.
+### Figure {#pandoc.Figure}
+
+`Figure (content[, caption[, attr]])`
+
+Creates a [Figure] element.
 
 Parameters:
 
 `content`
-:   figure block content
+:   figure block content ([Blocks])
 
 `caption`
-:   figure caption
+:   figure caption ([Caption])
 
 `attr`
-:   element attributes
+:   element attributes ([Attr])
 
-Returns: [Figure][] object
+Returns:
 
-### `Header (level, content[, attr])` {#pandoc.header}
+-   Figure object ([Block])
+
+### Header {#pandoc.Header}
+
+`Header (level, content[, attr])`
 
 Creates a header element.
 
 Parameters:
 
 `level`
-:   header level
+:   heading level ([integer]{unknown-type="integer"})
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
 `attr`
-:   element attributes
+:   element attributes ([Attr])
 
-Returns: [Header] object
+Returns:
 
-### `HorizontalRule ()` {#pandoc.horizontalrule}
+-   Header element ([Block])
+
+### HorizontalRule {#pandoc.HorizontalRule}
+
+`HorizontalRule ()`
 
 Creates a horizontal rule.
 
-Returns: [HorizontalRule] object
+Returns:
 
-### `LineBlock (content)` {#pandoc.lineblock}
+-   HorizontalRule element ([Block])
+
+### LineBlock {#pandoc.LineBlock}
+
+`LineBlock (content)`
 
 Creates a line block element.
 
 Parameters:
 
 `content`
-:   inline content
+:   lines ({[Inlines],\...})
 
-Returns: [LineBlock] object
+Returns:
 
-### `OrderedList (items[, listAttributes])` {#pandoc.orderedlist}
+-   LineBlock element ([Block])
+
+### OrderedList {#pandoc.OrderedList}
+
+`OrderedList (items[, listAttributes])`
 
 Creates an ordered list.
 
 Parameters:
 
 `items`
-:   list items
+:   list items ({[Blocks],\...})
 
 `listAttributes`
-:   list parameters
+:   list parameters ([ListAttributes])
 
-Returns: [OrderedList](#type-orderedlist) object
+Returns:
 
-### `Para (content)` {#pandoc.para}
+-   OrderedList element ([Block])
+
+### Para {#pandoc.Para}
+
+`Para (content)`
 
 Creates a para element.
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Para](#type-para) object
+Returns:
 
-### `Plain (content)` {#pandoc.plain}
+-   Para element ([Block])
+
+### Plain {#pandoc.Plain}
+
+`Plain (content)`
 
 Creates a plain element.
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Plain](#type-plain) object
+Returns:
 
-### `RawBlock (format, text)` {#pandoc.rawblock}
+-   Plain element ([Block])
+
+### RawBlock {#pandoc.RawBlock}
+
+`RawBlock (format, text)`
 
 Creates a raw content block of the specified format.
 
 Parameters:
 
 `format`
-:   format of content
+:   format of content (string)
 
 `text`
-:   string content
+:   raw content (string)
 
-Returns: [RawBlock](#type-rawblock) object
+Returns:
 
-### `Table (caption, colspecs, head, bodies, foot[, attr])` {#pandoc.table}
+-   RawBlock element ([Block])
+
+### Table {#pandoc.Table}
+
+`Table (caption, colspecs, head, bodies, foot[, attr])`
 
 Creates a table element.
 
 Parameters:
 
 `caption`
-:   table [caption](#type-caption)
+:   table caption ([Caption])
 
 `colspecs`
-:   column alignments and widths (list of [ColSpec](#type-colspec)s)
+:   column alignments and widths ({[ColSpec],\...})
 
 `head`
-:   [table head](#type-tablehead)
+:   table head ([TableHead])
 
 `bodies`
-:   [table bodies](#type-tablebody)
+:   table bodies ({[TableBody],\...})
 
 `foot`
-:   [table foot](#type-tablefoot)
+:   table foot ([TableFoot])
 
 `attr`
-:   element attributes
+:   element attributes ([Attr])
 
-Returns: [Table](#type-table) object
+Returns:
 
-## Blocks
+-   Table element ([Block])
 
-### `Blocks (block_like_elements)` {#pandoc.blocks}
+### Blocks {#pandoc.Blocks}
 
-Creates a [Blocks][] list.
+`Blocks (block_like_elements)`
+
+Creates a [Blocks] list.
 
 Parameters:
 
 `block_like_elements`
-:   List where each element can be treated as a [Block]
-    value, or a single such value.
+:   List where each element can be treated as a [Block] value, or
+    a single such value. ([Blocks])
 
-Returns: [Blocks][]
+Returns:
 
-## Inline
+-   list of block elements ([Blocks])
 
-### `Cite (content, citations)` {#pandoc.cite}
+### Cite {#pandoc.Cite}
+
+`Cite (Inlines, citations)`
 
 Creates a Cite inline element
 
 Parameters:
 
-`content`
-:   List of inlines
+`Inlines`
+:   placeholder content ([content]{unknown-type="content"})
 
 `citations`
-:   List of citations
+:   List of Citations ({[Citation]{unknown-type="Citation"},\...})
 
-Returns: [Cite](#type-cite) object
+Returns:
 
-### `Code (text[, attr])` {#pandoc.code}
+-   cite element ([Inline])
+
+### Code {#pandoc.Code}
+
+`Code (code[, attr])`
 
 Creates a Code inline element
 
 Parameters:
 
-`text`
-:   code string
+`code`
+:   code string (string)
 
 `attr`
-:   additional attributes
+:   additional attributes ([Attr])
 
-Returns: [Code](#type-code) object
+Returns:
 
-### `Emph (content)` {#pandoc.emph}
+-   code element ([Inline])
+
+### Emph {#pandoc.Emph}
+
+`Emph (content)`
 
 Creates an inline element representing emphasized text.
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Emph](#type-emph) object
+Returns:
 
-### `Image (caption, src[, title[, attr]])` {#pandoc.image}
+-   new object ([Inline])
 
-Creates a Image inline element
+### Image {#pandoc.Image}
+
+`Image (caption, src[, title[, attr]])`
+
+Creates an Image element
 
 Parameters:
 
 `caption`
-:   text used to describe the image
+:   text used to describe the image ([Inlines])
 
 `src`
-:   path to the image file
+:   path to the image file (string)
 
 `title`
-:   brief image description
+:   brief image description (string)
 
 `attr`
-:   additional attributes
+:   image attributes ([Attr])
 
-Returns: [Image](#type-image) object
+Returns:
 
-### `LineBreak ()` {#pandoc.linebreak}
+-   Image element ([Inline])
+
+### LineBreak {#pandoc.LineBreak}
+
+`LineBreak ()`
 
 Create a LineBreak inline element
 
-Returns: [LineBreak](#type-linebreak) object
+Returns:
 
-### `Link (content, target[, title[, attr]])` {#pandoc.link}
+-   line break ([Inline])
+
+### Link {#pandoc.Link}
+
+`Link (content, target[, title[, attr]])`
 
 Creates a link inline element, usually a hyperlink.
 
 Parameters:
 
 `content`
-:   text for this link
+:   text for this link ([Inlines])
 
 `target`
-:   the link target
+:   the link target (string)
 
 `title`
-:   brief link description
+:   brief link description (string)
 
 `attr`
-:   additional attributes
+:   link attributes ([Attr])
 
-Returns: [Link](#type-link) object
+Returns:
 
-### `Math (mathtype, text)` {#pandoc.math}
+-   link element ([Inline])
+
+### Math {#pandoc.Math}
+
+`Math (mathtype, text)`
 
 Creates a Math element, either inline or displayed.
 
 Parameters:
 
 `mathtype`
-:   rendering specifier
+:   rendering specifier ([MathType]{unknown-type="MathType"})
 
 `text`
-:   Math content
+:   math content (string)
 
-Returns: [Math](#type-math) object
+Returns:
 
-### `DisplayMath (text)` {#pandoc.displaymath}
+-   math element ([Inline])
 
-Creates a math element of type "DisplayMath" (DEPRECATED).
+### Note {#pandoc.Note}
 
-Parameters:
-
-`text`
-:   Math content
-
-Returns: [Math](#type-math) object
-
-### `InlineMath (text)` {#pandoc.inlinemath}
-
-Creates a math element of type "InlineMath" (DEPRECATED).
-
-Parameters:
-
-`text`
-:   Math content
-
-Returns: [Math](#type-math) object
-
-### `Note (content)` {#pandoc.note}
+`Note (content)`
 
 Creates a Note inline element
 
 Parameters:
 
 `content`
-:   footnote block content
+:   footnote block content ([Blocks])
 
-Returns: [Note](#type-note) object
+Returns:
 
-### `Quoted (quotetype, content)` {#pandoc.quoted}
+-   note ([Inline])
 
-Creates a Quoted inline element given the quote type and
-quoted content.
+### Quoted {#pandoc.Quoted}
+
+`Quoted (quotetype, content)`
+
+Creates a Quoted inline element given the quote type and quoted
+content.
 
 Parameters:
 
 `quotetype`
-:   type of quotes to be used
+:   type of quotes ([QuoteType]{unknown-type="QuoteType"})
 
 `content`
-:   inline content
+:   inlines in quotes ([Inlines])
 
-Returns: [Quoted](#type-quoted) object
+Returns:
 
-### `SingleQuoted (content)` {#pandoc.singlequoted}
+-   quoted element ([Inline])
 
-Creates a single-quoted inline element (DEPRECATED).
+### RawInline {#pandoc.RawInline}
 
-Parameters:
-
-`content`
-:   inline content
-
-Returns: [Quoted](#type-quoted)
-
-### `DoubleQuoted (content)` {#pandoc.doublequoted}
-
-Creates a single-quoted inline element (DEPRECATED).
-
-Parameters:
-
-`content`
-:   inline content
-
-Returns: [Quoted](#type-quoted)
-
-### `RawInline (format, text)` {#pandoc.rawinline}
+`RawInline (format, text)`
 
 Creates a raw inline element
 
 Parameters:
 
 `format`
-:   format of the contents
+:   format of content (string)
 
 `text`
-:   string content
+:   string content (string)
 
-Returns: [RawInline](#type-rawinline) object
+Returns:
 
-### `SmallCaps (content)` {#pandoc.smallcaps}
+-   raw inline element ([Inline])
+
+### SmallCaps {#pandoc.SmallCaps}
+
+`SmallCaps (content)`
 
 Creates text rendered in small caps
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [SmallCaps](#type-smallcaps) object
+Returns:
 
-### `SoftBreak ()` {#pandoc.softbreak}
+-   new object ([Inline])
+
+### SoftBreak {#pandoc.SoftBreak}
+
+`SoftBreak ()`
 
 Creates a SoftBreak inline element.
 
-Returns: [SoftBreak](#type-softbreak) object
+Returns:
 
-### `Space ()` {#pandoc.space}
+-   soft break ([Inline])
+
+### Space {#pandoc.Space}
+
+`Space ()`
 
 Create a Space inline element
 
-Returns: [Space](#type-space) object
+Returns:
 
-### `Span (content[, attr])` {#pandoc.span}
+-   new space ([Inline])
+
+### Span {#pandoc.Span}
+
+`Span (content[, attr])`
 
 Creates a Span inline element
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
 `attr`
-:   additional attributes
+:   additional attributes ([Attr])
 
-Returns: [Span](#type-span) object
+Returns:
 
-### `Str (text)` {#pandoc.str}
+-   [Span] object ([Inline])
+
+### Str {#pandoc.Str}
+
+`Str (text)`
 
 Creates a Str inline element
 
 Parameters:
 
 `text`
-:   content
+:    (string)
 
-Returns: [Str](#type-str) object
+Returns:
 
-### `Strikeout (content)` {#pandoc.strikeout}
+-   [Str] object ([Inline])
+
+### Strikeout {#pandoc.Strikeout}
+
+`Strikeout (content)`
 
 Creates text which is struck out.
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Strikeout](#type-strikeout) object
+Returns:
 
-### `Strong (content)` {#pandoc.strong}
+-   new object ([Inline])
 
-Creates a Strong element, whose text is usually displayed in
-a bold font.
+### Strong {#pandoc.Strong}
+
+`Strong (content)`
+
+Creates a Strong element, whose text is usually displayed in a
+bold font.
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Strong](#type-strong) object
+Returns:
 
-### `Subscript (content)` {#pandoc.subscript}
+-   new object ([Inline])
+
+### Subscript {#pandoc.Subscript}
+
+`Subscript (content)`
 
 Creates a Subscript inline element
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Subscript](#type-subscript) object
+Returns:
 
-### `Superscript (content)` {#pandoc.superscript}
+-   new object ([Inline])
+
+### Superscript {#pandoc.Superscript}
+
+`Superscript (content)`
 
 Creates a Superscript inline element
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Superscript](#type-superscript) object
+Returns:
 
-### `Underline (content)` {#pandoc.underline}
+-   new object ([Inline])
+
+### Underline {#pandoc.Underline}
+
+`Underline (content)`
 
 Creates an Underline inline element
 
 Parameters:
 
 `content`
-:   inline content
+:   inline content ([Inlines])
 
-Returns: [Underline](#type-underline) object
+Returns:
 
-## Inlines
+-   new object ([Inline])
 
-### `Inlines (inline_like_elements)` {#pandoc.inlines}
+### Inlines {#pandoc.Inlines}
 
-Converts its argument into an [Inlines][] list:
+`Inlines (inline_like_elements)`
+
+Converts its argument into an [Inlines] list:
 
 -   copies a list of [Inline] elements into a fresh list; any
     string `s` within the list is treated as `pandoc.Str(s)`;
 -   turns a single [Inline] into a singleton list;
--   splits a string into `Str`-wrapped words, treating
-    interword spaces as `Space`s or `SoftBreak`s.
+-   splits a string into `Str`-wrapped words, treating interword
+    spaces as `Space`s or `SoftBreak`s.
 
 Parameters:
 
 `inline_like_elements`
-:   List where each element can be treated as an [Inline]
-    values, or just a single such value.
+:   List where each element can be treated as an [Inline] value,
+    or just a single such value. ([Inlines])
 
-Returns: [Inlines][] list
+Returns:
 
+-   list of inline elements ([Inlines])
 
-## Element components
+### Attr {#pandoc.Attr}
 
-### `Attr ([identifier[, classes[, attributes]]])` {#pandoc.attr}
+`Attr ([identifier[, classes[, attributes]]])`
 
-Create a new set of attributes (Attr).
+Create a new set of attributes
 
 Parameters:
 
 `identifier`
-:   element identifier
+:   element identifier (string\|table\|[Attr])
 
 `classes`
-:   element classes
+:   element classes ({string,\...})
 
 `attributes`
 :   table containing string keys and values
+    (table\|[AttributeList])
 
-Returns: [Attr](#type-attr) object
+Returns:
 
-### `Cell (blocks[, align[, rowspan[, colspan[, attr]]]])` {#pandoc.cell}
+-   new Attr object ([Attr])
+
+### Cell {#pandoc.Cell}
+
+`Cell (blocks[, align[, rowspan[, colspan[, attr]]]])`
 
 Create a new table cell.
 
 Parameters:
 
 `blocks`
-:   cell contents ([Blocks][])
+:   cell contents ([Blocks])
 
 `align`
-:   text alignment; defaults to `AlignDefault` (Alignment)
+:   text alignment; defaults to `AlignDefault` ([Alignment])
 
 `rowspan`
 :   number of rows occupied by the cell; defaults to `1`
-    (integer)
+    ([integer]{unknown-type="integer"})
 
 `colspan`
-:   number of columns spanned by the cell; defaults to `1`
-    (integer)
+:   number of columns occupied by the cell; defaults to `1`
+    ([integer]{unknown-type="integer"})
 
 `attr`
-:   cell attributes ([Attr](#type-attr))
+:   cell attributes ([Attr])
 
 Returns:
 
--   [Cell](#type-cell) object
+-   new Cell object ([Cell])
 
-### `Citation (id, mode[, prefix[, suffix[, note_num[, hash]]]])` {#pandoc.citation}
+### AttributeList {#pandoc.AttributeList}
+
+`AttributeList (attribs)`
+
+Parameters:
+
+`attribs`
+:   an attribute list (table\|[AttributeList])
+
+Returns:
+
+-   new AttributeList object ([AttributeList])
+
+### Citation {#pandoc.Citation}
+
+`Citation (id, mode[, prefix[, suffix[, note_num[, hash]]]])`
 
 Creates a single citation.
 
 Parameters:
 
 `id`
-:   citation identifier (like a bibtex key)
+:   citation ID (e.g. BibTeX key) (string)
 
 `mode`
-:   citation mode
+:   citation rendering mode
+    ([CitationMode]{unknown-type="CitationMode"})
 
 `prefix`
-:   citation prefix
+:    ([Inlines])
 
 `suffix`
-:   citation suffix
+:    ([Inlines])
 
 `note_num`
-:   note number
+:   note number ([integer]{unknown-type="integer"})
 
 `hash`
-:   hash number
+:   hash number ([integer]{unknown-type="integer"})
 
-Returns: [Citation](#type-citation) object
+Returns:
 
-### `ListAttributes ([start[, style[, delimiter]]])` {#pandoc.listattributes}
+-   new citation object ([Citation]{unknown-type="Citation"})
 
-Creates a set of list attributes.
+### ListAttributes {#pandoc.ListAttributes}
+
+`ListAttributes ([start[, style[, delimiter]]])`
+
+Creates a new ListAttributes object.
 
 Parameters:
 
 `start`
 :   number of the first list item
+    ([integer]{unknown-type="integer"})
 
 `style`
-:   style used for list numbering
+:   style used for list numbering (string)
 
 `delimiter`
-:   delimiter of list numbers
+:   delimiter of list numbers (string)
 
-Returns: [ListAttributes](#type-listattributes) object
+Returns:
 
-### `Row ([cells[, attr]])` {#pandoc.row}
+-   new ListAttributes object ([ListAttributes])
+
+### Row {#pandoc.Row}
+
+`Row ([cells[, attr]])`
 
 Creates a table row.
 
 Parameters:
 
 `cells`
-:   list of table cells in this row
+:   list of table cells in this row ({[Cell],\...})
 
 `attr`
-:   row attributes
+:   row attributes ([Attr])
 
-### `TableFoot ([rows[, attr]])` {#pandoc.tablefoot}
+Returns:
+
+-   new Row object ([Row])
+
+### TableFoot {#pandoc.TableFoot}
+
+`TableFoot ([rows[, attr]])`
 
 Creates a table foot.
 
 Parameters:
 
 `rows`
-:   list of table rows
+:   list of table rows ({[Row],\...})
 
 `attr`
-:   table foot attributes
+:   table foot attributes ([Attr])
 
-### `TableHead ([rows[, attr]])` {#pandoc.tablehead}
+Returns:
+
+-   new TableFoot object ([TableFoot])
+
+### TableHead {#pandoc.TableHead}
+
+`TableHead ([rows[, attr]])`
 
 Creates a table head.
 
 Parameters:
 
 `rows`
-:   list of table rows
+:   list of table rows ({[Row],\...})
 
 `attr`
-:   table head attributes
+:   table head attributes ([Attr])
 
-## Legacy types
+Returns:
 
-### `SimpleTable (caption, aligns, widths, headers, rows)` {#pandoc.simpletable}
+-   new TableHead object ([TableHead])
 
-Creates a simple table resembling the old (pre pandoc 2.10)
-table type.
+### SimpleTable {#pandoc.SimpleTable}
 
-Parameters:
-
-`caption`
-:   [Inlines][]
-
-`aligns`
-:   column alignments ([List] of [Alignments](#type-alignment))
-
-`widths`
-:   column widths; a  ([List] of numbers)
-
-`headers`
-:   table header row ([List] of [Blocks][])
-
-`rows`
-:   table rows ([List] of rows, where a row is a list
-    of [Blocks][])
-
-Returns: [SimpleTable] object
+`SimpleTable (caption, align, widths, header, rows)`
 
 Usage:
 
@@ -3303,6 +3442,29 @@ Usage:
       rows
     )
 
+Parameters:
+
+`caption`
+:   table caption ([Inlines])
+
+`align`
+:   column alignments ({[Alignment],\...})
+
+`widths`
+:   relative column widths ({number,\...})
+
+`header`
+:   table header row ({[Blocks],\...})
+
+`rows`
+:   table rows ({{[Blocks],\...},\...})
+
+Returns:
+
+-   new SimpleTable object ([SimpleTable])
+
+<!-- END: AUTOGENERATED CONTENT -->
+
 ## Constants
 
 [`AuthorInText`]{#pandoc.authorintext}
@@ -3322,6 +3484,34 @@ Usage:
 :   Default citation style is used.
 
     See also: [Citation](#type-citation)
+
+[`DisplayMath`]{#pandoc.displaymath}
+
+:   Math style identifier, marking that the formula should be show
+    in "display" style, i.e., on a separate line.
+
+    See also: [Math](#type-math)
+
+[`InlineMath`]{#pandoc.inlinemath}
+
+:   Math style identifier, marking that the formula should be show
+    inline.
+
+    See also: [Math](#type-math)
+
+[`SingleQuote`]{#pandoc.singlequote}
+
+:   Quote type used with [Quoted](#type-quoted), indicating
+    that the string is enclosed in *single* quotes.
+
+    See also: [Quoted](#type-quoted)
+
+[`DoubleQuote`]{#pandoc.doublequote}
+
+:   Quote type used with [Quoted](#type-quoted), indicating
+    that the string is enclosed in *double* quotes.
+
+    See also: [Quoted](#type-quoted)
 
 [`AlignLeft`]{#pandoc.alignleft}
 
@@ -3703,8 +3893,8 @@ are explicitly passed via the `env` parameter; e.g.
       return pandoc.cli.repl{ doc = doc }
     end
 
-**Note**: it seems that the function exits immediately on
-Windows, without prompting for user input.
+**Note**: it seems that the function exits immediately on Windows,
+without prompting for user input.
 
 Parameters:
 
@@ -3876,6 +4066,27 @@ Returns:
 
 *Since: 2.8*
 
+### normalize_date {#pandoc.utils.normalize_date}
+
+`normalize_date (date)`
+
+Parse a date and convert (if possible) to "YYYY-MM-DD" format. We
+limit years to the range 1601-9999 (ISO 8601 accepts greater than
+or equal to 1583, but MS Word only accepts dates starting 1601).
+Returns nil instead of a string if the conversion failed.
+
+Parameters:
+
+`date`
+:   the date string (string)
+
+Returns:
+
+-   normalized date, or nil if normalization failed. ([string or
+    nil]{unknown-type="string or nil"})
+
+*Since: 2.0.6*
+
 ### references {#pandoc.utils.references}
 
 `references (doc)`
@@ -3934,26 +4145,30 @@ Returns:
 
 *Since: 2.1.1*
 
-### normalize_date {#pandoc.utils.normalize_date}
+### run_lua_filter {#pandoc.utils.run_lua_filter}
 
-`normalize_date (date)`
+`run_lua_filter (doc, filter[, env])`
 
-Parse a date and convert (if possible) to "YYYY-MM-DD" format. We
-limit years to the range 1601-9999 (ISO 8601 accepts greater than
-or equal to 1583, but MS Word only accepts dates starting 1601).
-Returns nil instead of a string if the conversion failed.
+Filter the given doc by passing it through a Lua filter.
+
+The filter will be run in the current Lua process.
 
 Parameters:
 
-`date`
-:   the date string (string)
+`doc`
+:   the Pandoc document to filter ([Pandoc])
+
+`filter`
+:   filepath of the filter to run (string)
+
+`env`
+:   environment to load and run the filter in (table)
 
 Returns:
 
--   normalized date, or nil if normalization failed. ([string or
-    nil]{unknown-type="string or nil"})
+-   filtered document ([Pandoc])
 
-*Since: 2.0.6*
+*Since: 3.2.1*
 
 ### sha1 {#pandoc.utils.sha1}
 
@@ -4053,11 +4268,16 @@ argument has a string-valued metafield `__name`, then it returns
 that string. Otherwise it behaves just like the normal `type`
 function.
 
-Usage: -- Prints one of 'string', 'boolean', 'Inlines', 'Blocks',
--- 'table', and 'nil', corresponding to the Haskell constructors
--- MetaString, MetaBool, MetaInlines, MetaBlocks, MetaMap, -- and
-an unset value, respectively. function Meta (meta) print('type of
-metavalue `author`:', pandoc.utils.type(meta.author)) end
+Usage:
+
+    -- Prints one of 'string', 'boolean', 'Inlines', 'Blocks',
+    -- 'table', and 'nil', corresponding to the Haskell constructors
+    -- MetaString, MetaBool, MetaInlines, MetaBlocks, MetaMap,
+    -- and an unset value, respectively.
+
+    function Meta (meta)
+      print('type of metavalue `author`:', pandoc.utils.type(meta.author))
+    end
 
 Parameters:
 
@@ -4084,7 +4304,7 @@ Parameters:
 
 Returns:
 
--   new Version object ([Version]{unknown-type="Version"})
+-   new Version object ([Version])
 
 <!-- END: AUTOGENERATED CONTENT -->
 
@@ -4356,6 +4576,28 @@ Returns:
 
 ## Methods
 
+### `pandoc.List:at` {#pandoc.list:at}
+
+`:at (index[, default])`
+
+Returns the element at the given index, or `default` if the list
+contains no item at the given position.
+
+Negative integers count back from the last item in the list.
+
+Parameters:
+
+`index`
+:   element position (integer)
+
+`default`
+:   the default value that is returned if the index is out of
+    range (any)
+
+Returns:
+
+-   the list item at `index`, or `default`.
+
 ### `pandoc.List:clone ()` {#pandoc.list:clone}
 
 Returns a (shallow) copy of the list. (To get a deep copy
@@ -4446,6 +4688,28 @@ Parameters:
 `value`
 :   value to insert into the list
 
+### `pandoc.List:iter ([step])` {#pandoc.list:iter}
+
+Create an iterator over the list. The resulting function returns the
+next value each time it is called.
+
+Usage:
+
+    for item in List{1, 1, 2, 3, 5, 8}:iter() do
+      -- process item
+    end
+
+Parameters:
+
+`step`
+:   step width with which to step through the list. Negative step sizes
+    will cause the iterator to start from the end of the list. Defaults
+    to 1. (integer)
+
+Returns:
+
+-   iterator (function)
+
 ### `pandoc.List:map (fn)` {#pandoc.list:map}
 
 Returns a copy of the current list by applying the given
@@ -4460,6 +4724,9 @@ Parameters:
 
 Create a new List. If the optional argument `table` is given,
 set the metatable of that value to `pandoc.List`.
+
+The function also accepts an iterator, in which case it creates a
+new list from the return values of the iterator function.
 
 Parameters:
 
@@ -4602,6 +4869,67 @@ Returns:
 
 <!-- END: AUTOGENERATED CONTENT -->
 
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.image -->
+
+# Module pandoc.image
+
+Basic image querying functions.
+
+## Functions {#pandoc.image-functions}
+
+### size {#pandoc.image.size}
+
+`size (image[, opts])`
+
+Returns a table containing the size and resolution of an image;
+throws an error if the given string is not an image, or if the
+size of the image cannot be determined.
+
+The resulting table has four entries: *width*, *height*,
+*dpi_horz*, and *dpi_vert*.
+
+The `opts` parameter, when given, should be either a WriterOptions
+object such as `PANDOC_WRITER_OPTIONS`, or a table with a `dpi`
+entry. It affects the calculation for vector image formats such as
+SVG.
+
+Parameters:
+
+`image`
+:   image data (string)
+
+`opts`
+:   writer options ([WriterOptions]\|table)
+
+Returns:
+
+-   image size information or error message (table)
+
+*Since: 3.1.13*
+
+### format {#pandoc.image.format}
+
+`format (image)`
+
+Returns the format of an image as a lowercase string.
+
+Formats recognized by pandoc include *png*, *gif*, *tiff*, *jpeg*,
+*pdf*, *svg*, *eps*, and *emf*.
+
+Parameters:
+
+`image`
+:   binary image data (string)
+
+Returns:
+
+-   image format, or nil if the format cannot be determined
+    (string\|nil)
+
+*Since: 3.1.13*
+
+<!-- END: AUTOGENERATED CONTENT -->
+
 <!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.json -->
 
 # Module pandoc.json
@@ -4620,11 +4948,14 @@ Value used to represent the `null` JSON value. (light userdata)
 
 `decode (str[, pandoc_types])`
 
-Creates a Lua object from a JSON string. The function returns an
-[Inline], [Block], [Pandoc], [Inlines], or [Blocks] element if the
-input can be decoded into represent any of those types. Otherwise
-the default decoding is applied, using tables, booleans, numbers,
-and [null] to represent the JSON value.
+Creates a Lua object from a JSON string. If the input can be
+decoded as representing an [Inline], [Block], [Pandoc], [Inlines],
+or [Blocks] element the function will return an object of the
+appropriate type. Otherwise, if the input does not represent any
+of the AST types, the default decoding is applied: Objects and
+arrays are represented as tables, the JSON `null` value becomes
+[null], and JSON booleans, strings, and numbers are converted
+using the Lua types of the same name.
 
 The special handling of AST elements can be disabled by setting
 `pandoc_types` to `false`.
@@ -4652,7 +4983,7 @@ Encodes a Lua object as JSON string.
 If the object has a metamethod with name `__tojson`, then the
 result is that of a call to that method with `object` passed as
 the sole argument. The result of that call is expected to be a
-valid JSON string, but this not checked.
+valid JSON string, but this is not checked.
 
 Parameters:
 
@@ -4664,6 +4995,66 @@ Returns:
 -   JSON encoding of the given `object` (string)
 
 *Since: 3.1.1*
+
+<!-- END: AUTOGENERATED CONTENT -->
+
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.log -->
+
+# Module pandoc.log
+
+Access to pandoc's logging system.
+
+## Functions {#pandoc.log-functions}
+
+### info {#pandoc.log.info}
+
+`info (message)`
+
+Reports a ScriptingInfo message to pandoc's logging system.
+
+Parameters:
+
+`message`
+:   the info message (string)
+
+*Since: 3.2*
+
+### silence {#pandoc.log.silence}
+
+`silence (fn)`
+
+Applies the function to the given arguments while preventing log
+messages from being added to the log. The warnings and info
+messages reported during the function call are returned as the
+first return value, with the results of the function call
+following thereafter.
+
+Parameters:
+
+`fn`
+:   function to be silenced (function)
+
+Returns:
+
+List of log messages triggered during the function call, and any
+value returned by the function.
+
+*Since: 3.2*
+
+### warn {#pandoc.log.warn}
+
+`warn (message)`
+
+Reports a ScriptingWarning to pandoc's logging system. The warning
+will be printed to stderr unless logging verbosity has been set to
+*ERROR*.
+
+Parameters:
+
+`message`
+:   the warning message (string)
+
+*Since: 3.2*
 
 <!-- END: AUTOGENERATED CONTENT -->
 
@@ -5049,6 +5440,8 @@ The machine architecture on which the program is running. (string)
 ### os {#pandoc.system.os}
 
 The operating system on which the program is running. (string)
+The most common values are `darwin` (macOS), `freebsd`, `linux`,
+`linux-android`, `mingw32` (Windows), `netbsd`, `openbsd`.
 
 ## Functions {#pandoc.system-functions}
 
@@ -5229,6 +5622,9 @@ The results of the call to `callback`.
 
 <!-- END: AUTOGENERATED CONTENT -->
 
+
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.layout -->
+
 # Module pandoc.layout
 
 Plain-text document layouting.
@@ -5237,20 +5633,20 @@ Plain-text document layouting.
 
 ### blankline {#pandoc.layout.blankline}
 
-Inserts a blank line unless one exists already.
+Inserts a blank line unless one exists already. ([Doc])
 
 ### cr {#pandoc.layout.cr}
 
-A carriage return. Does nothing if we\'re at the beginning of a
-line; otherwise inserts a newline.
+A carriage return. Does nothing if we're at the beginning of a
+line; otherwise inserts a newline. ([Doc])
 
 ### empty {#pandoc.layout.empty}
 
-The empty document.
+The empty document. ([Doc])
 
 ### space {#pandoc.layout.space}
 
-A breaking (reflowable) space.
+A breaking (reflowable) space. ([Doc])
 
 ## Functions {#pandoc.layout-functions}
 
@@ -5258,21 +5654,22 @@ A breaking (reflowable) space.
 
 `after_break (text)`
 
-Creates a `Doc` which is conditionally included only if it comes
+Creates a [Doc] which is conditionally included only if it comes
 at the beginning of a line.
 
 An example where this is useful is for escaping line-initial `.`
 in roff man.
 
-Parameters
+Parameters:
 
 `text`
-
 :   content to include when placed after a break (string)
 
-Returns
+Returns:
 
 -   new doc ([Doc])
+
+*Since: 2.18*
 
 ### before_non_blank {#pandoc.layout.before_non_blank}
 
@@ -5281,15 +5678,16 @@ Returns
 Conditionally includes the given `doc` unless it is followed by a
 blank space.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   conditional doc ([Doc])
+
+*Since: 2.18*
 
 ### blanklines {#pandoc.layout.blanklines}
 
@@ -5297,15 +5695,16 @@ Returns
 
 Inserts blank lines unless they exist already.
 
-Parameters
+Parameters:
 
 `n`
+:   number of blank lines ([integer]{unknown-type="integer"})
 
-:   number of blank lines (integer)
-
-Returns
+Returns:
 
 -   conditional blank lines ([Doc])
+
+*Since: 2.18*
 
 ### braces {#pandoc.layout.braces}
 
@@ -5313,15 +5712,16 @@ Returns
 
 Puts the `doc` in curly braces.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
--   doc enclosed by {}. ([Doc])
+-   `doc` enclosed by {}. ([Doc])
+
+*Since: 2.18*
 
 ### brackets {#pandoc.layout.brackets}
 
@@ -5329,15 +5729,16 @@ Returns
 
 Puts the `doc` in square brackets
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   doc enclosed by \[\]. ([Doc])
+
+*Since: 2.18*
 
 ### cblock {#pandoc.layout.cblock}
 
@@ -5346,20 +5747,20 @@ Returns
 Creates a block with the given width and content, aligned
 centered.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `width`
+:   block width in chars ([integer]{unknown-type="integer"})
 
-:   block width in chars (integer)
+Returns:
 
-Returns
-
--   doc, aligned centered in a block with max`width` chars per
+-   doc, aligned centered in a block with max `width` chars per
     line. ([Doc])
+
+*Since: 2.18*
 
 ### chomp {#pandoc.layout.chomp}
 
@@ -5367,15 +5768,16 @@ Returns
 
 Chomps trailing blank space off of the `doc`.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   `doc` without trailing blanks ([Doc])
+
+*Since: 2.18*
 
 ### concat {#pandoc.layout.concat}
 
@@ -5383,19 +5785,19 @@ Returns
 
 Concatenates a list of `Doc`s.
 
-Parameters
+Parameters:
 
 `docs`
-
-:   list of Docs (`{Doc,...}`)
+:   list of Docs ([\`{Doc,\...}\`]{unknown-type="`{Doc,...}`"})
 
 `sep`
-
 :   separator (default: none) ([Doc])
 
-Returns
+Returns:
 
 -   concatenated doc ([Doc])
+
+*Since: 2.18*
 
 ### double_quotes {#pandoc.layout.double_quotes}
 
@@ -5403,15 +5805,16 @@ Returns
 
 Wraps a `Doc` in double quotes.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   `doc` enclosed by `"` chars ([Doc])
+
+*Since: 2.18*
 
 ### flush {#pandoc.layout.flush}
 
@@ -5419,15 +5822,16 @@ Returns
 
 Makes a `Doc` flush against the left margin.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   flushed `doc` ([Doc])
+
+*Since: 2.18*
 
 ### hang {#pandoc.layout.hang}
 
@@ -5435,48 +5839,46 @@ Returns
 
 Creates a hanging indent.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `ind`
-
-:   indentation width (integer)
+:   indentation width ([integer]{unknown-type="integer"})
 
 `start`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   `doc` prefixed by `start` on the first line, subsequent lines
     indented by `ind` spaces. ([Doc])
+
+*Since: 2.18*
 
 ### inside {#pandoc.layout.inside}
 
 `inside (contents, start, end)`
 
-Encloses a `Doc` inside a start and end `Doc`.
+Encloses a [Doc] inside a start and end [Doc].
 
-Parameters
+Parameters:
 
 `contents`
-
 :   document ([Doc])
 
 `start`
-
 :   document ([Doc])
 
 `end`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   enclosed contents ([Doc])
+
+*Since: 2.18*
 
 ### lblock {#pandoc.layout.lblock}
 
@@ -5485,19 +5887,19 @@ Returns
 Creates a block with the given width and content, aligned to the
 left.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `width`
+:   block width in chars ([integer]{unknown-type="integer"})
 
-:   block width in chars (integer)
-
-Returns
+Returns:
 
 -   doc put into block with max `width` chars per line. ([Doc])
+
+*Since: 2.18*
 
 ### literal {#pandoc.layout.literal}
 
@@ -5505,15 +5907,16 @@ Returns
 
 Creates a `Doc` from a string.
 
-Parameters
+Parameters:
 
 `text`
-
 :   literal value (string)
 
-Returns
+Returns:
 
 -   doc containing just the literal string ([Doc])
+
+*Since: 2.18*
 
 ### nest {#pandoc.layout.nest}
 
@@ -5521,19 +5924,19 @@ Returns
 
 Indents a `Doc` by the specified number of spaces.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `ind`
+:   indentation size ([integer]{unknown-type="integer"})
 
-:   indentation size (integer)
-
-Returns
+Returns:
 
 -   `doc` indented by `ind` spaces ([Doc])
+
+*Since: 2.18*
 
 ### nestle {#pandoc.layout.nestle}
 
@@ -5541,15 +5944,16 @@ Returns
 
 Removes leading blank lines from a `Doc`.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   `doc` with leading blanks removed ([Doc])
+
+*Since: 2.18*
 
 ### nowrap {#pandoc.layout.nowrap}
 
@@ -5557,15 +5961,16 @@ Returns
 
 Makes a `Doc` non-reflowable.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   same as input, but non-reflowable ([Doc])
+
+*Since: 2.18*
 
 ### parens {#pandoc.layout.parens}
 
@@ -5573,15 +5978,16 @@ Returns
 
 Puts the `doc` in parentheses.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   doc enclosed by (). ([Doc])
+
+*Since: 2.18*
 
 ### prefixed {#pandoc.layout.prefixed}
 
@@ -5590,19 +5996,19 @@ Returns
 Uses the specified string as a prefix for every line of the inside
 document (except the first, if not at the beginning of the line).
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `prefix`
-
 :   prefix for each line (string)
 
-Returns
+Returns:
 
 -   prefixed `doc` ([Doc])
+
+*Since: 2.18*
 
 ### quotes {#pandoc.layout.quotes}
 
@@ -5610,15 +6016,16 @@ Returns
 
 Wraps a `Doc` in single quotes.
 
-Parameters
+Parameters:
 
 `doc`
+:   document ([Doc])
 
-:   document (Doc)
-
-Returns
+Returns:
 
 -   doc enclosed in `'`. ([Doc])
+
+*Since: 2.18*
 
 ### rblock {#pandoc.layout.rblock}
 
@@ -5627,20 +6034,20 @@ Returns
 Creates a block with the given width and content, aligned to the
 right.
 
-Parameters
+Parameters:
 
 `doc`
-
-:   document (Doc)
+:   document ([Doc])
 
 `width`
+:   block width in chars ([integer]{unknown-type="integer"})
 
-:   block width in chars (integer)
+Returns:
 
-Returns
-
--   doc, right aligned in a block with max`width` chars per line.
+-   doc, right aligned in a block with max `width` chars per line.
     ([Doc])
+
+*Since: 2.18*
 
 ### vfill {#pandoc.layout.vfill}
 
@@ -5649,37 +6056,45 @@ Returns
 An expandable border that, when placed next to a box, expands to
 the height of the box. Strings cycle through the list provided.
 
-Parameters
+Parameters:
 
 `border`
-
 :   vertically expanded characters (string)
 
-Returns
+Returns:
 
 -   automatically expanding border Doc ([Doc])
 
+*Since: 2.18*
+
 ### render {#pandoc.layout.render}
 
-`render (doc[, colwidth])`
+`render (doc[, colwidth[, style]])`
 
-Render a @\'Doc\'@. The text is reflowed on breakable spaces to
-match the given line length. Text is not reflowed if the line
+Render a [Doc]. The text is reflowed on breakable spaces to match
+the given line length. Text is not reflowed if the line line
 length parameter is omitted or nil.
 
-Parameters
+Parameters:
 
 `doc`
-
-:   document (Doc)
+:   document ([Doc])
 
 `colwidth`
+:   Maximum number of characters per line. A value of `nil`, the
+    default, means that the text is not reflown.
+    ([integer]{unknown-type="integer"})
 
-:   planned maximum line length (integer)
+`style`
+:   Whether to generate plain text or ANSI terminal output. Must
+    be either `'plain'` or `'ansi'`. Defaults to `'plain'`.
+    (string)
 
-Returns
+Returns:
 
--   rendered doc ([Doc])
+-   rendered doc (string)
+
+*Since: 2.18*
 
 ### is_empty {#pandoc.layout.is_empty}
 
@@ -5687,16 +6102,17 @@ Returns
 
 Checks whether a doc is empty.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
 -   `true` iff `doc` is the empty document, `false` otherwise.
     (boolean)
+
+*Since: 2.18*
 
 ### height {#pandoc.layout.height}
 
@@ -5704,48 +6120,52 @@ Returns
 
 Returns the height of a block or other Doc.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
--   doc height (integer\|string)
+-   doc height ([integer]{unknown-type="integer"}\|string)
+
+*Since: 2.18*
 
 ### min_offset {#pandoc.layout.min_offset}
 
 `min_offset (doc)`
 
-Returns the minimal width of a `Doc` when reflowed at breakable
+Returns the minimal width of a [Doc] when reflowed at breakable
 spaces.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
--   minimal possible width (integer\|string)
+-   minimal possible width
+    ([integer]{unknown-type="integer"}\|string)
+
+*Since: 2.18*
 
 ### offset {#pandoc.layout.offset}
 
 `offset (doc)`
 
-Returns the width of a `Doc` as number of characters.
+Returns the width of a [Doc] as number of characters.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
-Returns
+Returns:
 
--   doc width (integer\|string)
+-   doc width ([integer]{unknown-type="integer"}\|string)
+
+*Since: 2.18*
 
 ### real_length {#pandoc.layout.real_length}
 
@@ -5755,15 +6175,16 @@ Returns the real length of a string in a monospace font: 0 for a
 combining character, 1 for a regular character, 2 for an East
 Asian wide character.
 
-Parameters
+Parameters:
 
 `str`
-
 :   UTF-8 string to measure (string)
 
-Returns
+Returns:
 
--   text length (integer\|string)
+-   text length ([integer]{unknown-type="integer"}\|string)
+
+*Since: 2.18*
 
 ### update_column {#pandoc.layout.update_column}
 
@@ -5772,21 +6193,138 @@ Returns
 Returns the column that would be occupied by the last laid out
 character.
 
-Parameters
+Parameters:
 
 `doc`
-
 :   document ([Doc])
 
 `i`
+:   start column ([integer]{unknown-type="integer"})
 
-:   start column (integer)
+Returns:
 
-Returns
+-   column number ([integer]{unknown-type="integer"}\|string)
 
--   column number (integer\|string)
+*Since: 2.18*
 
-[Doc]: #type-doc
+### bold {#pandoc.layout.bold}
+
+`bold (doc)`
+
+Puts a [Doc] in boldface.
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+Returns:
+
+-   bolded Doc ([Doc])
+
+*Since: 3.4.1*
+
+### italic {#pandoc.layout.italic}
+
+`italic (doc)`
+
+Puts a [Doc] in italics.
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+Returns:
+
+-   styled Doc ([Doc])
+
+*Since: 3.4.1*
+
+### underlined {#pandoc.layout.underlined}
+
+`underlined (doc)`
+
+Underlines a [Doc].
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+Returns:
+
+-   styled Doc ([Doc])
+
+*Since: 3.4.1*
+
+### strikeout {#pandoc.layout.strikeout}
+
+`strikeout (doc)`
+
+Puts a line through the [Doc].
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+Returns:
+
+-   styled Doc ([Doc])
+
+*Since: 3.4.1*
+
+### fg {#pandoc.layout.fg}
+
+`fg (doc, color)`
+
+Set the foreground color.
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+`color`
+:   One of 'black', 'red', 'green', 'yellow', 'blue', 'magenta'
+    'cyan', or 'white'. (string)
+
+Returns:
+
+-   styled Doc ([Doc])
+
+*Since: 3.4.1*
+
+### bg {#pandoc.layout.bg}
+
+`bg (doc, color)`
+
+Set the background color.
+
+Parameters:
+
+`doc`
+:   document ([Doc])
+
+`color`
+:   One of 'black', 'red', 'green', 'yellow', 'blue', 'magenta'
+    'cyan', or 'white'. (string)
+
+Returns:
+
+-   styled Doc ([Doc])
+
+*Since: 3.4.1*
+
+## Types {#pandoc.layout-types}
+
+### Doc {#type-pandoc.Doc}
+
+See the description [above][Doc].
+
+<!-- END: AUTOGENERATED CONTENT -->
+
 
 <!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.scaffolding -->
 
@@ -5972,9 +6510,13 @@ Returns:
 
 <!-- END: AUTOGENERATED CONTENT -->
 
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.template -->
+
 # Module pandoc.template
 
 Handle pandoc templates.
+
+## Functions {#pandoc.template-functions}
 
 ### apply {#pandoc.template.apply}
 
@@ -5989,7 +6531,7 @@ aforementioned types, or a nested context.
 Parameters:
 
 `template`
-:   template to apply ([Template]{#type-template})
+:   template to apply ([Template])
 
 `context`
 :   variable values (table)
@@ -5998,17 +6540,19 @@ Returns:
 
 -   rendered template ([Doc])
 
+*Since: 3.0*
+
 ### compile {#pandoc.template.compile}
 
 `compile (template[, templates_path])`
 
-Compiles a template string into a [Template](#type-template)
-object usable by pandoc.
+Compiles a template string into a [Template] object usable by
+pandoc.
 
-If the `templates_path` parameter is specified, should be the
-file path associated with the template. It is used when checking
-for partials. Partials will be taken only from the default data
-files if this parameter is omitted.
+If the `templates_path` parameter is specified, then it should be
+the file path associated with the template. It is used when
+checking for partials. Partials will be taken only from the
+default data files if this parameter is omitted.
 
 An error is raised if compilation fails.
 
@@ -6024,32 +6568,58 @@ Parameters:
 
 Returns:
 
--   compiled template (Template)
+-   compiled template ([Template])
+
+*Since: 2.17*
 
 ### default {#pandoc.template.default}
 
 `default ([writer])`
 
 Returns the default template for a given writer as a string. An
-error if no such template can be found.
+error is thrown if no such template can be found.
 
 Parameters:
 
 `writer`
-:   name of the writer for which the template should be
-    retrieved; defaults to the global `FORMAT`.
+:   name of the writer for which the template should be retrieved;
+    defaults to the global `FORMAT`. (string)
 
 Returns:
 
 -   raw template (string)
 
+*Since: 2.17*
+
+### get {#pandoc.template.get}
+
+`get (filename)`
+
+Retrieve text for a template.
+
+This function first checks the resource paths for a file of this
+name; if none is found, the `templates` directory in the user data
+directory is checked. Returns the content of the file, or throws
+an error if no file is found.
+
+Parameters:
+
+`filename`
+:   name of the template (string)
+
+Returns:
+
+-   content of template file (string)
+
+*Since: 3.2.1*
+
 ### meta_to_context {#pandoc.template.meta_to_context}
 
 `meta_to_context (meta, blocks_writer, inlines_writer)`
 
-Creates template context from the document's [Meta]{#type-meta}
-data, using the given functions to convert [Blocks] and [Inlines]
-to [Doc] values.
+Creates template context from the document's [Meta] data, using
+the given functions to convert [Blocks] and [Inlines] to [Doc]
+values.
 
 Parameters:
 
@@ -6066,26 +6636,36 @@ Returns:
 
 -   template context (table)
 
+*Since: 3.0*
+
+<!-- END: AUTOGENERATED CONTENT -->
+
+<!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.types -->
+
 # Module pandoc.types
 
-Constructors for types which are not part of the pandoc AST.
+Constructors for types that are not part of the pandoc AST.
 
-### Version {#pandoc.types.version}
+## Functions {#pandoc.types-functions}
+
+### Version {#pandoc.types.Version}
 
 `Version (version_specifier)`
-
-Creates a Version object.
 
 Parameters:
 
 `version_specifier`
-:   Version specifier: this can be a version string like
-    `'2.7.3'`, a list of integers like `{2, 7, 3}`, a single
-    integer, or a [Version].
+:   A version string like `'2.7.3'`, a Lua number like `2.0`, a
+    list of integers like `{2,7,3}`, or a Version object.
+    (string\|number\|{[integer]{unknown-type="integer"},\...}\|[Version])
 
 Returns:
 
--   A new [Version] object.
+-   New Version object. ([Version])
+
+*Since: 2.7.3*
+
+<!-- END: AUTOGENERATED CONTENT -->
 
 <!-- BEGIN: AUTOGENERATED CONTENT for module pandoc.zip -->
 
@@ -6206,7 +6786,7 @@ Returns:
 
 Files in this zip archive ({[zip.Entry],\...})
 
-#### Methods
+#### Methods {#type-pandoc.zip.Archive-methods}
 
 ##### bytestring {#pandoc.zip.Archive.bytestring}
 
@@ -6253,7 +6833,7 @@ Modification time (seconds since unix epoch)
 
 Relative path, using `/` as separator ([zip.Entry])
 
-#### Methods
+#### Methods {#type-pandoc.zip.Entry-methods}
 
 ##### contents {#pandoc.zip.Entry.contents}
 
@@ -6275,21 +6855,56 @@ Returns:
 
 -   binary contents (string)
 
+##### symlink {#pandoc.zip.Entry.symlink}
+
+`symlink (self)`
+
+Returns the target if the Entry represents a symbolic link, and
+`nil` otherwise. Always returns `nil` on Windows.
+
+Parameters:
+
+`self`
+:    ([zip.Entry])
+
+Returns:
+
+-   link target if entry represents a symbolic link (string\|nil)
+
 <!-- END: AUTOGENERATED CONTENT -->
 
 <!-- BEGIN: GENERATED REFERENCE LINKS -->
 
-  [Block]: #type-block
   [Blocks]: #type-blocks
-  [Inline]: #type-inline
-  [Inlines]: #type-inlines
+  [Meta]: #type-meta
   [Pandoc]: #type-pandoc
-  [Table]: #type-table
+  [Inlines]: #type-inlines
+  [MetaValue]: #type-metavalue
+  [Block]: #type-block
+  [Attr]: #type-attr
+  [Figure]: #type-figure
+  [Caption]: #type-caption
+  [ListAttributes]: #type-listattributes
+  [ColSpec]: #type-colspec
+  [TableHead]: #type-tablehead
+  [TableBody]: #type-tablebody
+  [TableFoot]: #type-tablefoot
+  [Inline]: #type-inline
+  [Span]: #type-span
+  [Str]: #type-str
+  [AttributeList]: #type-attributes
+  [Alignment]: #type-alignment
+  [Cell]: #type-cell
+  [Row]: #type-row
   [SimpleTable]: #type-simpletable
+  [Table]: #type-table
+  [Version]: #type-version
   [`list`]: #pandoc.mediabag.list
+  [WriterOptions]: #type-writeroptions
   [null]: #pandoc.json.null
   [this blog post]: http://neilmitchell.blogspot.co.uk/2015/10/filepaths-are-subtle-symlinks-are-hard.html
-  [WriterOptions]: #type-writeroptions
   [ChunkedDoc]: #type-chunkeddoc
+  [Doc]: #type-doc
+  [Template]: #type-template
   [zip.Entry]: #type-pandoc.zip.Entry
   [zip.Archive]: #type-pandoc.zip.Archive

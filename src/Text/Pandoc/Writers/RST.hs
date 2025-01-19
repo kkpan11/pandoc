@@ -2,7 +2,7 @@
 {-# LANGUAGE ViewPatterns      #-}
 {- |
    Module      : Text.Pandoc.Writers.RST
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -254,12 +254,17 @@ blockToRST (Div (ident,classes,_kvs) bs) = do
                           -> ".. " <> literal cl <> "::"
                         cls -> ".. container::" <> space <>
                                    literal (T.unwords (filter (/= "container") cls))
+  -- if contents start with block quote, we need to insert
+  -- an empty comment to fix the indentation point (#10236)
+  let contents' = case bs of
+                    BlockQuote{}:_-> ".." $+$ contents
+                    _ -> contents
   return $ blankline $$
            admonition $$
            (if T.null ident
                then blankline
                else "   :name: " <> literal ident $$ blankline) $$
-           nest 3 contents $$
+           nest 3 contents' $$
            blankline
 blockToRST (Plain inlines) = inlineListToRST inlines
 blockToRST (Para inlines)
@@ -351,7 +356,7 @@ blockToRST (Table _attrs blkCapt specs thead tbody tfoot) = do
         | otherwise = renderGrid
   tbl <- rendered
   return $ blankline $$
-           (if null caption
+           (if null caption || isList
                then tbl
                else (".. table:: " <> caption') $$ blankline $$ nest 3 tbl) $$
            blankline
@@ -421,7 +426,12 @@ blockToRST (Figure (ident, classes, _kvs)
 bulletListItemToRST :: PandocMonad m => [Block] -> RST m (Doc Text)
 bulletListItemToRST items = do
   contents <- blockListToRST items
-  return $ hang 3 "-  " contents $$
+  -- if a list item starts with block quote, we need to insert
+  -- an empty comment to fix the indentation point (#10236)
+  let contents' = case items of
+                    BlockQuote{}:_-> ".." $+$ contents
+                    _ -> contents
+  return $ hang 2 "- " contents' $$
       if null items || (endsWithPlain items && not (endsWithList items))
          then cr
          else blankline
@@ -434,7 +444,12 @@ orderedListItemToRST :: PandocMonad m
 orderedListItemToRST marker items = do
   contents <- blockListToRST items
   let marker' = marker <> " "
-  return $ hang (T.length marker') (literal marker') contents $$
+  -- if a list item starts with block quote, we need to insert
+  -- an empty comment to fix the indentation point (#10236)
+  let contents' = case items of
+                    BlockQuote{}:_-> ".." $+$ contents
+                    _ -> contents
+  return $ hang (T.length marker') (literal marker') contents' $$
       if null items || (endsWithPlain items && not (endsWithList items))
          then cr
          else blankline
@@ -450,7 +465,12 @@ definitionListItemToRST :: PandocMonad m => ([Inline], [[Block]]) -> RST m (Doc 
 definitionListItemToRST (label, defs) = do
   label' <- inlineListToRST label
   contents <- liftM vcat $ mapM blockListToRST defs
-  return $ nowrap label' $$ nest 3 (nestle contents) $$
+  -- if definition list starts with block quote, we need to insert
+  -- an empty comment to fix the indentation point (#10236)
+  let contents' = case defs of
+                    (BlockQuote{}:_):_ -> ".." $+$ contents
+                    _ -> contents
+  return $ nowrap label' $$ nest 3 (nestle contents') $$
       if isTightList defs
          then cr
          else blankline
@@ -547,24 +567,8 @@ tableToRSTList caption _ propWidths headers rows = do
         toColumns :: Int -> Double -> Int
         toColumns t p = round (p * fromIntegral t)
         listTableContent :: PandocMonad m => [[[Block]]] -> RST m (Doc Text)
-        listTableContent = joinTable joinDocsM joinDocsM .
-                           mapTable blockListToRST
-        -- joinDocsM adapts joinDocs in order to work in the `RST m` monad
-        joinDocsM :: PandocMonad m => [RST m (Doc Text)] -> RST m (Doc Text)
-        joinDocsM = fmap joinDocs . sequence
-        -- joinDocs will be used to join cells and to join rows
-        joinDocs :: [Doc Text] -> Doc Text
-        joinDocs items = blankline $$
-                         (chomp . vcat . map formatItem) items $$
-                         blankline
-        formatItem :: Doc Text -> Doc Text
-        formatItem i = hang 3 "- " (i <> cr)
-        -- apply a function to all table cells changing their type
-        mapTable :: (a -> b) -> [[a]] -> [[b]]
-        mapTable = map . map
-        -- function hor to join cells and function ver to join rows
-        joinTable :: ([a] -> a) -> ([a] -> a) -> [[a]] -> a
-        joinTable hor ver = ver . map hor
+        listTableContent = fmap vcat .
+          mapM (fmap (hang 2 (text "* ") . vcat) . mapM bulletListItemToRST)
 
 transformInlines :: [Inline] -> [Inline]
 transformInlines =  insertBS .

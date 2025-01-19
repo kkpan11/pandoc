@@ -914,6 +914,7 @@ registerMedia fp caption = do
                  Just Svg  -> Just ".svg"
                  Just Emf  -> Just ".emf"
                  Just Tiff -> Just ".tiff"
+                 Just Webp -> Just ".webp"
                  Nothing   -> Nothing
 
   let newGlobalId = fromMaybe (maxGlobalId + 1) (M.lookup fp globalIds)
@@ -1054,7 +1055,8 @@ createCaption contentShapeDimensions paraElements = do
                [mknode "a:bodyPr" [] (), mknode "a:lstStyle" [] ()] <> elements
   return
     ( 1
-    ,  mknode "p:sp" [] [ mknode "p:nvSpPr" []
+    ,  surroundWithMathAlternate $
+       mknode "p:sp" [] [ mknode "p:nvSpPr" []
                           [ mknode "p:cNvPr" [("id","1"), ("name","TextBox 3")] ()
                           , mknode "p:cNvSpPr" [("txBox", "1")] ()
                           , mknode "p:nvPr" [] ()
@@ -1353,7 +1355,7 @@ shapeToElements layout (GraphicFrame tbls cptn) = map (bimap Just Elem) <$>
   graphicFrameToElements layout tbls cptn
 shapeToElements _ (RawOOXMLShape str) = return
   [(Nothing, Text (CData CDataRaw str Nothing))]
-shapeToElements layout shp = do
+shapeToElements layout shp@(TextBox _) = do
   (shapeId, element) <- shapeToElement layout shp
   return [(shapeId, Elem element)]
 
@@ -1411,18 +1413,18 @@ getDefaultTableStyle = do
   return $ findAttr (QName "def" Nothing Nothing) tblStyleLst
 
 graphicToElement :: PandocMonad m => Integer -> Graphic -> P m Element
-graphicToElement tableWidth (Tbl tblPr hdrCells rows) = do
-  let colWidths = if null hdrCells
-                  then case rows of
-                         r : _ | not (null r) -> replicate (length r) $
+graphicToElement tableWidth (Tbl widths tblPr hdrCells rows) = do
+  let totalWidth = sum widths
+  let colWidths = if any (== 0.0) widths
+                  then if null hdrCells
+                      then case rows of
+                         r@(_:_) : _ -> replicate (length r) $
                                                  tableWidth `div` toInteger (length r)
-                         -- satisfy the compiler. This is the same as
-                         -- saying that rows is empty, but the compiler
-                         -- won't understand that `[]` exhausts the
-                         -- alternatives.
-                         _ -> []
-                  else replicate (length hdrCells) $
-                       tableWidth `div` toInteger (length hdrCells)
+                         []: _ -> []
+                         [] -> []
+                      else replicate (length hdrCells) $
+                           tableWidth `div` toInteger (length hdrCells)
+                  else map (\w -> round $ w / totalWidth * fromIntegral tableWidth) widths
 
   let cellToOpenXML paras =
         do elements <- mapM paragraphToElement paras
@@ -1538,7 +1540,9 @@ nonBodyTextToElement layout phTypes paraElements
       let txBody = mknode "p:txBody" [] $
                    [mknode "a:bodyPr" [] (), mknode "a:lstStyle" [] ()] <>
                    [element]
-      return (Just shapeIdNum, replaceNamedChildren ns "p" "txBody" [txBody] sp)
+      return (Just shapeIdNum,
+              surroundWithMathAlternate $
+                replaceNamedChildren ns "p" "txBody" [txBody] sp)
   -- XXX: TODO
   | otherwise = return (Nothing, mknode "p:sp" [] ())
 
@@ -2008,6 +2012,7 @@ speakerNotesBody paras = do
   let txBody = mknode "p:txBody" [] $
                [mknode "a:bodyPr" [] (), mknode "a:lstStyle" [] ()] <> elements
   return $
+    surroundWithMathAlternate $
     mknode "p:sp" []
     [ mknode "p:nvSpPr" []
       [ mknode "p:cNvPr" [ ("id", "3")

@@ -1,7 +1,6 @@
 Pandoc
   Meta { unMeta = fromList [] }
-  [ Para []
-  , Header
+  [ Header
       1
       ( "" , [] , [] )
       [ Str "Fibonacci" , Space , Str "sequence" ]
@@ -46,7 +45,6 @@ Pandoc
           DisplayMath
           "F_{n} = \\left\\lfloor {\\frac{1}{\\sqrt{5}}\\phi^{n}} \\right\\rceil,\\quad\\phi = \\frac{1 + \\sqrt{5}}{2}"
       ]
-  , Para []
   , Para
       [ Str "The"
       , Space
@@ -189,12 +187,6 @@ Pandoc
           ]
           (TableFoot ( "" , [] , [] ) [])
       ]
-  , Para []
-  , Para []
-  , Para []
-  , Para []
-  , Para []
-  , Para []
   , Div
       ( "" , [ "columns-flow" ] , [ ( "count" , "2" ) ] )
       [ Para
@@ -203,7 +195,8 @@ Pandoc
               [ Underline
                   [ Link
                       ( "" , [] , [] )
-                      [ Strong
+                      [ SoftBreak
+                      , Strong
                           [ Str "Typst"
                           , Space
                           , Str "Math"
@@ -212,6 +205,7 @@ Pandoc
                           , Space
                           , Str "Undergrads"
                           ]
+                      , SoftBreak
                       ]
                       ( "https://github.com/johanvx/typst-undergradmath"
                       , ""
@@ -532,7 +526,7 @@ Pandoc
                       AlignDefault
                       (RowSpan 1)
                       (ColSpan 1)
-                      [ Para [] ]
+                      []
                   , Cell
                       ( "" , [] , [] )
                       AlignDefault
@@ -1674,14 +1668,13 @@ Pandoc
           , Space
           , Str "or"
           , Space
-          , Math InlineMath "\\underset{\175}{A}"
+          , Math InlineMath "\\overline{A}"
           , Space
           , Str "with"
           , Space
           , Code ( "" , [] , [] ) "overline(A)"
           , Str ")."
           ]
-      , Para []
       , DefinitionList
           [ ( [ Str "Remark" ]
             , [ [ Para
@@ -1830,7 +1823,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math InlineMath "f\\prime"
+                                  [ Math InlineMath "f'"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "f'"
                                   , Str ","
@@ -1847,8 +1840,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math
-                                      InlineMath "\\overset{\\cdot}{a}"
+                                  [ Math InlineMath "\\dot{a}"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "dot(a)"
                                   ]
@@ -1862,8 +1854,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math
-                                      InlineMath "\\overset{\\sim}{a}"
+                                  [ Math InlineMath "\\widetilde{a}"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "tilde(a)"
                                   ]
@@ -1895,7 +1886,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math InlineMath "\\overset{\168}{a}"
+                                  [ Math InlineMath "\\ddot{a}"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "diaer(a)"
                                   ]
@@ -2042,7 +2033,7 @@ Pandoc
           , Space
           , Str "produces"
           , Space
-          , Math InlineMath "\\underset{\175}{x + y}"
+          , Math InlineMath "\\overline{x + y}"
           , Str ","
           , Space
           , Str "and"
@@ -3194,7 +3185,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math InlineMath "\\preccurlyeq"
+                                  [ Math InlineMath "\\preceq"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "prec.eq"
                                   ]
@@ -3210,7 +3201,7 @@ Pandoc
                                   ( "" , [ "box" ] , [] )
                                   [ Math InlineMath "\\ominus"
                                   , Str "\8192"
-                                  , Code ( "" , [] , [] ) "minus.cirle"
+                                  , Code ( "" , [] , [] ) "minus.circle"
                                   ]
                               ]
                           ]
@@ -3287,7 +3278,7 @@ Pandoc
                           [ Para
                               [ Span
                                   ( "" , [ "box" ] , [] )
-                                  [ Math InlineMath "\\succcurlyeq"
+                                  [ Math InlineMath "\\succeq"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "succ.eq"
                                   ]
@@ -4045,7 +4036,7 @@ Pandoc
                                   ( "" , [ "box" ] , [] )
                                   [ Math
                                       InlineMath
-                                      "\\left. \\parallel{} \\right.\\parallel"
+                                      "\\left\\| {} \\right\\|"
                                   , Str "\8192"
                                   , Code ( "" , [] , [] ) "norm(\"\")"
                                   ]
@@ -4980,13 +4971,10 @@ Pandoc
                           AlignDefault
                           (RowSpan 1)
                           (ColSpan 1)
-                          [ Div
-                              ( "" , [] , [] )
-                              [ Para
-                                  [ Math
-                                      InlineMath
-                                      "f:{\\mathbb{R}} \\rightarrow {\\mathbb{R}}"
-                                  ]
+                          [ Para
+                              [ Math
+                                  InlineMath
+                                  "f:{\\mathbb{R}} \\rightarrow {\\mathbb{R}}"
                               ]
                           ]
                       , Cell
@@ -5004,13 +4992,8 @@ Pandoc
                           AlignDefault
                           (RowSpan 1)
                           (ColSpan 1)
-                          [ Div
-                              ( "" , [] , [] )
-                              [ Para
-                                  [ Math
-                                      InlineMath
-                                      "9.8\\ \\text{ m/s}^{2}"
-                                  ]
+                          [ Para
+                              [ Math InlineMath "9.8\\ \\text{ m/s}^{2}"
                               ]
                           ]
                       , Cell
@@ -5018,18 +5001,14 @@ Pandoc
                           AlignDefault
                           (RowSpan 1)
                           (ColSpan 1)
-                          [ Div
-                              ( "" , [] , [] )
-                              [ Para
-                                  [ Code
-                                      ( "" , [] , [] )
-                                      "\"9.8\" \"m/s\"^2"
-                                  , Space
-                                  , Link
-                                      ( "" , [ "ref" ] , [] )
-                                      [ Str "[tricky]" ]
-                                      ( "#tricky" , "" )
-                                  ]
+                          [ Para
+                              [ Code
+                                  ( "" , [] , [] ) "\"9.8\" \"m/s\"^2"
+                              , Space
+                              , Link
+                                  ( "" , [ "ref" ] , [] )
+                                  [ Str "[tricky]" ]
+                                  ( "#tricky" , "" )
                               ]
                           ]
                       ]
@@ -5238,13 +5217,10 @@ Pandoc
                           AlignDefault
                           (RowSpan 1)
                           (ColSpan 1)
-                          [ Div
-                              ( "" , [] , [] )
-                              [ Para
-                                  [ Math
-                                      InlineMath
-                                      "\\sigma^{2} = \\sqrt{{\\sum(x_{i} - \\mu)}^{2}/N}"
-                                  ]
+                          [ Para
+                              [ Math
+                                  InlineMath
+                                  "\\sigma^{2} = \\sqrt{{\\sum(x_{i} - \\mu)}^{2}/N}"
                               ]
                           ]
                       , Cell
@@ -5264,13 +5240,10 @@ Pandoc
                           AlignDefault
                           (RowSpan 1)
                           (ColSpan 1)
-                          [ Div
-                              ( "" , [] , [] )
-                              [ Para
-                                  [ Math
-                                      InlineMath
-                                      "E(X) = \\mu_{X} = \\sum(x_{i} - P\\left( x_{i} \\right))"
-                                  ]
+                          [ Para
+                              [ Math
+                                  InlineMath
+                                  "E(X) = \\mu_{X} = \\sum(x_{i} - P\\left( x_{i} \\right))"
                               ]
                           ]
                       , Cell
@@ -5327,7 +5300,7 @@ Pandoc
                       AlignDefault
                       (RowSpan 1)
                       (ColSpan 1)
-                      [ Para [] ]
+                      []
                   , Cell
                       ( "" , [] , [] )
                       AlignDefault
@@ -5365,30 +5338,26 @@ Pandoc
               ]
           , Str "."
           ]
-      , Para []
-      , Div
-          ( "" , [] , [] )
-          [ HorizontalRule
-          , Para
-              [ Str "johanvx"
-              , Space
-              , Str "("
-              , Underline
+      , HorizontalRule
+      , Para
+          [ Str "johanvx"
+          , Space
+          , Str "("
+          , Underline
+              [ Underline
                   [ Underline
-                      [ Underline
-                          [ Link
-                              ( "" , [] , [] )
-                              [ Str "https://github.com/johanvx" ]
-                              ( "https://github.com/johanvx" , "" )
-                          ]
+                      [ Link
+                          ( "" , [] , [] )
+                          [ Str "https://github.com/johanvx" ]
+                          ( "https://github.com/johanvx" , "" )
                       ]
                   ]
-              , Str ")"
-              , Space
-              , Str "\8202\8193"
-              , Space
-              , Str "2023-05-22"
               ]
+          , Str ")"
+          , Space
+          , Str "\8202\8193"
+          , Space
+          , Str "2023-05-22"
           ]
       ]
   ]

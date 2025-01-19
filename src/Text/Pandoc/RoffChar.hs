@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- |
    Module      : Text.Pandoc.RoffChar
-   Copyright   : Copyright (C) 2007-2023 John MacFarlane
+   Copyright   : Copyright (C) 2007-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -34,7 +34,6 @@ standardEscapes =
   , ('`', "\\[ga]")
   , ('^', "\\[ha]")
   , ('~', "\\[ti]")
-  , ('-', "\\-")
   , ('\\', "\\[rs]")
   , ('@', "\\[at]") -- because we use @ as a table and math delimiter
   , ('\x2026', "\\&...")  -- because u2026 doesn't render on tty

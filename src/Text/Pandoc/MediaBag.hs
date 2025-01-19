@@ -4,7 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {- |
    Module      : Text.Pandoc.MediaBag
-   Copyright   : Copyright (C) 2014-2015, 2017-2023 John MacFarlane
+   Copyright   : Copyright (C) 2014-2015, 2017-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -23,20 +23,19 @@ module Text.Pandoc.MediaBag (
                      mediaDirectory,
                      mediaItems
                      ) where
+import Crypto.Hash (hashWith, SHA1(SHA1))
 import qualified Data.ByteString.Lazy as BL
 import Data.Data (Data)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Typeable (Typeable)
-import Network.URI (unEscapeString)
 import System.FilePath
 import qualified System.FilePath.Posix as Posix
 import qualified System.FilePath.Windows as Windows
 import Text.Pandoc.MIME (MimeType, getMimeTypeDef, extensionFromMimeType)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Digest.Pure.SHA (sha1, showDigest)
-import Network.URI (URI (..), parseURI, isURI)
+import Network.URI (URI (..), isURI, parseURI, unEscapeString)
 import Data.List (isInfixOf)
 
 data MediaItem =
@@ -59,6 +58,8 @@ instance Show MediaBag where
 -- | We represent paths with /, in normalized form.  Percent-encoding
 -- is not resolved.
 canonicalize :: FilePath -> Text
+-- avoid an expensive call to isURI for data URIs:
+canonicalize fp@('d':'a':'t':'a':':':_) = T.pack fp
 canonicalize fp
   | isURI fp = T.pack fp
   | otherwise = T.replace "\\" "/" . T.pack . normalise $ fp
@@ -78,29 +79,37 @@ insertMedia :: FilePath       -- ^ relative path and canonical name of resource
             -> BL.ByteString  -- ^ contents of resource
             -> MediaBag
             -> MediaBag
-insertMedia fp mbMime contents (MediaBag mediamap) =
-  MediaBag (M.insert fp' mediaItem mediamap)
-  where mediaItem = MediaItem{ mediaPath = newpath
-                             , mediaContents = contents
-                             , mediaMimeType = mt }
-        fp' = canonicalize fp
-        fp'' = unEscapeString $ T.unpack fp'
-        uri = parseURI fp
-        newpath = if Posix.isRelative fp''
-                       && Windows.isRelative fp''
-                       && isNothing uri
-                       && not (".." `isInfixOf` fp'')
-                       && '%' `notElem` fp''
-                     then fp''
-                     else showDigest (sha1 contents) <> ext
-        fallback = case takeExtension fp'' of
-                        ".gz" -> getMimeTypeDef $ dropExtension fp''
-                        _     -> getMimeTypeDef fp''
-        mt = fromMaybe fallback mbMime
-        path = maybe fp'' (unEscapeString . uriPath) uri
-        ext = case takeExtension path of
-                '.':e | '%' `notElem` e -> '.':e
-                _ -> maybe "" (\x -> '.':T.unpack x) $ extensionFromMimeType mt
+insertMedia fp mbMime contents (MediaBag mediamap)
+ | 'd':'a':'t':'a':':':_ <- fp
+ , Just mt' <- mbMime
+   = MediaBag (M.insert fp'
+               MediaItem{ mediaPath = hashpath
+                        , mediaContents = contents
+                        , mediaMimeType = mt' } mediamap)
+ | otherwise = MediaBag (M.insert fp' mediaItem mediamap)
+ where
+  mediaItem = MediaItem{ mediaPath = newpath
+                       , mediaContents = contents
+                       , mediaMimeType = mt }
+  fp' = canonicalize fp
+  fp'' = unEscapeString $ T.unpack fp'
+  uri = parseURI fp
+  hashpath = show (hashWith SHA1 (BL.toStrict contents)) <> ext
+  newpath = if Posix.isRelative fp''
+                 && Windows.isRelative fp''
+                 && isNothing uri
+                 && not (".." `isInfixOf` fp'')
+                 && '%' `notElem` fp''
+               then fp''
+               else hashpath
+  fallback = case takeExtension fp'' of
+                  ".gz" -> getMimeTypeDef $ dropExtension fp''
+                  _     -> getMimeTypeDef fp''
+  mt = fromMaybe fallback mbMime
+  path = maybe fp'' (unEscapeString . uriPath) uri
+  ext = case takeExtension path of
+          '.':e | '%' `notElem` e -> '.':e
+          _ -> maybe "" (\x -> '.':T.unpack x) $ extensionFromMimeType mt
 
 -- | Lookup a media item in a 'MediaBag', returning mime type and contents.
 lookupMedia :: FilePath

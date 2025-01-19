@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {- |
    Module      : Text.Pandoc.Readers.DocBook
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -44,8 +44,9 @@ import Text.Pandoc.Builder
 import Text.Pandoc.Class.PandocMonad (PandocMonad, report)
 import Text.Pandoc.Options
 import Text.Pandoc.Logging (LogMessage(..))
-import Text.Pandoc.Shared (safeRead, extractSpaces, headerShift)
+import Text.Pandoc.Shared (safeRead, extractSpaces)
 import Text.Pandoc.Sources (ToSources(..), sourcesToText)
+import Text.Pandoc.Transforms (headerShift)
 import Text.TeXMath (readMathML, writeTeX)
 import qualified Data.Map as M
 import Text.Pandoc.XML.Light
@@ -933,7 +934,8 @@ parseBlock (Elem e) =
           orderedListWith (start,listStyle,DefaultDelim) . handleCompact
             <$> listitems
         "variablelist" -> definitionList <$> deflistitems
-        "procedure" -> bulletList <$> steps
+        "procedure" -> orderedList <$> steps
+        "substeps" -> orderedList <$> steps
         "figure" -> getFigure e
         "informalfigure" -> getFigure e
         "mediaobject" -> para <$> getMediaobject e
@@ -1020,6 +1022,11 @@ parseBlock (Elem e) =
                      items' <- mapM getBlocks items
                      return (mconcat $ intersperse (str "; ") terms', items')
          parseTable = do
+                      let elId = attrValue "id" e
+                      let attrs = case attrValue "tabstyle" e of
+                                    "" -> []
+                                    x  -> [("custom-style", x)]
+                      let classes = T.words $ attrValue "class" e
                       let isCaption x = named "title" x || named "caption" x
                       capt <- case filterChild isCaption e of
                                     Just t  -> getInlines t
@@ -1073,7 +1080,8 @@ parseBlock (Elem e) =
                                                 Nothing  -> replicate numrows ColWidthDefault
                       let toRow = Row nullAttr
                           toHeaderRow l = [toRow l | not (null l)]
-                      return $ table (simpleCaption $ plain capt)
+                      return $ tableWith (elId,classes,attrs)
+                                     (simpleCaption $ plain capt)
                                      (zip aligns widths)
                                      (TableHead nullAttr $ toHeaderRow headrows)
                                      [TableBody nullAttr 0 [] $ map toRow bodyrows]
@@ -1107,8 +1115,9 @@ parseBlock (Elem e) =
            -- the title: docbook references are ambiguous on that, and some implementations of admonitions
            -- (e.g. asciidoctor) just use an icon in all cases. To be conservative, we don't
            -- include the label and leave it to styling.
-           title <- case filterChild (named "title") e of
-                        Just t  -> divWith ("", ["title"], []) . plain <$> getInlines t
+           title <- divWith ("", ["title"], []) . plain <$>
+                    case filterChild (named "title") e of
+                        Just t  -> getInlines t
                         Nothing -> return mempty
            -- this will ignore the title element if it is present
            b <- getBlocks e

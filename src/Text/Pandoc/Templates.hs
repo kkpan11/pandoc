@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- |
    Module      : Text.Pandoc.Templates
-   Copyright   : Copyright (C) 2009-2023 John MacFarlane
+   Copyright   : Copyright (C) 2009-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -102,17 +102,16 @@ getDefaultTemplate format = do
        "native"  -> return ""
        "csljson" -> return ""
        "json"    -> return ""
-       "docx"    -> return ""
        "fb2"     -> return ""
        "pptx"    -> return ""
        "ipynb"   -> return ""
        "asciidoctor" -> getDefaultTemplate "asciidoc"
        "asciidoc_legacy" -> getDefaultTemplate "asciidoc"
+       "docx"    -> getDefaultTemplate "openxml"
        "odt"     -> getDefaultTemplate "opendocument"
        "html"    -> getDefaultTemplate "html5"
        "docbook" -> getDefaultTemplate "docbook5"
        "epub"    -> getDefaultTemplate "epub3"
-       "beamer"  -> getDefaultTemplate "latex"
        "jats"    -> getDefaultTemplate "jats_archiving"
        "markdown_strict"   -> getDefaultTemplate "markdown"
        "multimarkdown"     -> getDefaultTemplate "markdown"

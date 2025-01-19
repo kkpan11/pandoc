@@ -1,12 +1,11 @@
 {-# LANGUAGE CPP                 #-}
-{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {- |
    Module      : Text.Pandoc.App.CommandLineOptions
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley@edu>
@@ -199,7 +198,6 @@ handleOptInfo engine info = E.handle (handleError . Left) $ do
       UTF8.hPutStrLn stdout
        $ T.pack
        $ prg ++ " " ++ T.unpack pandocVersionText ++
-         compileInfo ++
          "\nUser data directory: " ++ defaultDatadir ++
          ('\n':copyrightMessage)
     Help -> do
@@ -216,7 +214,7 @@ latexEngines  = ["pdflatex", "lualatex", "xelatex", "latexmk", "tectonic"]
 -- | Supported HTML PDF engines; the first item is used as default
 -- engine when going through HTML.
 htmlEngines :: [String]
-htmlEngines  = ["wkhtmltopdf", "weasyprint", "pagedjs-cli", "prince"]
+htmlEngines  = ["weasyprint", "wkhtmltopdf", "pagedjs-cli", "prince"]
 
 engines :: [(Text, String)]
 engines = map ("html",) htmlEngines ++
@@ -412,9 +410,28 @@ options =
                  "NUMBER")
                  "" -- "Number of levels to include in TOC"
 
+    , Option "" ["lof", "list-of-figures"]
+                (OptArg
+                 (\arg opt -> do
+                        boolValue <- readBoolFromOptArg "--lof/--list-of-figures" arg
+                        return opt { optListOfFigures = boolValue })
+                 "true|false")
+               "" -- "Include list of figures"
+
+    , Option "" ["lot", "list-of-tables"]
+                (OptArg
+                 (\arg opt -> do
+                        boolValue <- readBoolFromOptArg "--lot/--list-of-tables" arg
+                        return opt { optListOfTables = boolValue })
+                 "true|false")
+               "" -- "Include list of tables"
+
     , Option "N" ["number-sections"]
-                 (NoArg
-                  (\opt -> return opt { optNumberSections = True }))
+                  (OptArg
+                   (\arg opt -> do
+                        boolValue <- readBoolFromOptArg "--number-sections/-N" arg
+                        return opt { optNumberSections = boolValue })
+                  "true|false")
                  "" -- "Number sections"
 
     , Option "" ["number-offset"]
@@ -603,6 +620,14 @@ options =
                   "true|false")
                  "" -- "Make slide shows include all the needed js and css"
 
+    , Option "" ["link-images"] -- maybe True (\argStr -> argStr == "true") arg
+                 (OptArg
+                  (\arg opt -> do
+                        boolValue <- readBoolFromOptArg "--link-images" arg
+                        return opt { optLinkImages =  boolValue })
+                  "true|false")
+                 "" -- "Link images in ODT rather than embedding them"
+
     , Option "" ["request-header"]
                  (ReqArg
                   (\arg opt -> do
@@ -719,7 +744,31 @@ options =
                                "Argument of --reference-location must be block, section, or document"
                      return opt { optReferenceLocation = action })
                   "block|section|document")
-                 "" -- "Accepting or reject MS Word track-changes.""
+                 "" -- "Specify where reference links and footnotes go"
+
+    , Option "" ["figure-caption-position"]
+                 (ReqArg
+                  (\arg opt -> do
+                     pos <- case arg of
+                            "above"  -> return CaptionAbove
+                            "below"  -> return CaptionBelow
+                            _        -> optError $ PandocOptionError $ T.pack
+                               "Argument of --figure-caption-position must be above or below"
+                     return opt { optFigureCaptionPosition = pos })
+                  "above|below")
+                 "" -- "Specify where figure captions go"
+
+    , Option "" ["table-caption-position"]
+                 (ReqArg
+                  (\arg opt -> do
+                     pos <- case arg of
+                            "above"  -> return CaptionAbove
+                            "below"  -> return CaptionBelow
+                            _        -> optError $ PandocOptionError $ T.pack
+                               "Argument of --table-caption-position must be above or below"
+                     return opt { optTableCaptionPosition = pos })
+                  "above|below")
+                 "" -- "Specify where table captions go"
 
     , Option "" ["markdown-headings"]
                   (ReqArg
@@ -1104,16 +1153,9 @@ usageMessage programName = usageInfo (programName ++ " [OPTIONS] [FILES]")
 
 copyrightMessage :: String
 copyrightMessage = intercalate "\n" [
- "Copyright (C) 2006-2023 John MacFarlane. Web:  https://pandoc.org",
+ "Copyright (C) 2006-2024 John MacFarlane. Web:  https://pandoc.org",
  "This is free software; see the source for copying conditions. There is no",
  "warranty, not even for merchantability or fitness for a particular purpose." ]
-
-compileInfo :: String
-compileInfo =
-  "\nCompiled with pandoc-types " ++ VERSION_pandoc_types ++
-  ", texmath " ++ VERSION_texmath ++ ", skylighting " ++
-  VERSION_skylighting ++ ",\nciteproc " ++ VERSION_citeproc ++
-  ", ipynb " ++ VERSION_ipynb
 
 handleUnrecognizedOption :: String -> [String] -> [String]
 handleUnrecognizedOption "--smart" =

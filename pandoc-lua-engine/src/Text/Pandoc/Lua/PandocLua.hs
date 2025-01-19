@@ -7,9 +7,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {- |
    Module      : Text.Pandoc.Lua.PandocLua
-   Copyright   : © 2020-2023 Albert Krewinkel
+   Copyright   : © 2020-2024 Albert Krewinkel
    License     : GPL-2.0-or-later
-   Maintainer  : Albert Krewinkel <tarleb+pandoc@moltkeplatz.de>
+   Maintainer  : Albert Krewinkel <albert+pandoc@tarleb.com>
 
 PandocMonad instance which allows execution of Lua operations and which
 uses Lua to handle state.
@@ -77,10 +77,12 @@ instance PandocMonad PandocLua where
   getModificationTime = IO.getModificationTime
 
   getCommonState = PandocLua $ do
-    Lua.getglobal "PANDOC_STATE"
+    Lua.getfield registryindex "PANDOC_STATE"
     forcePeek $ peekCommonState Lua.top `lastly` pop 1
   putCommonState cst = PandocLua $ do
     pushCommonState cst
+    Lua.pushvalue Lua.top
+    Lua.setfield registryindex "PANDOC_STATE"
     Lua.setglobal "PANDOC_STATE"
 
   logOutput = IO.logOutput

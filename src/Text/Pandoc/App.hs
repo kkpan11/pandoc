@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {- |
    Module      : Text.Pandoc.App
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley@edu>
@@ -56,7 +56,10 @@ import Text.Pandoc.App.Opt (Opt (..), LineEnding (..), defaultOpts,
 import Text.Pandoc.App.CommandLineOptions (parseOptions, parseOptionsFromArgs,
                                            options, handleOptInfo)
 import Text.Pandoc.App.Input (InputParameters (..), readInput)
-import Text.Pandoc.App.OutputSettings (OutputSettings (..), optToOutputSettings)
+import Text.Pandoc.App.OutputSettings (OutputSettings (..), optToOutputSettings,
+                                       sandbox')
+import Text.Pandoc.Transforms (applyTransforms, filterIpynbOutput,
+                               headerShift, eastAsianLineBreakFilter)
 import Text.Collate.Lang (Lang (..), parseLang)
 import Text.Pandoc.Filter (Filter (JSONFilter, LuaFilter), Environment (..),
                            applyFilters)
@@ -64,9 +67,7 @@ import qualified Text.Pandoc.Format as Format
 import Text.Pandoc.PDF (makePDF)
 import Text.Pandoc.Scripting (ScriptingEngine (..), CustomComponents(..))
 import Text.Pandoc.SelfContained (makeSelfContained)
-import Text.Pandoc.Shared (eastAsianLineBreakFilter,
-         headerShift, filterIpynbOutput, tshow)
-import Text.Pandoc.URI (isURI)
+import Text.Pandoc.Shared (tshow)
 import Text.Pandoc.Writers.Shared (lookupMetaString)
 import Text.Pandoc.Readers.Markdown (yamlToMeta)
 import qualified Text.Pandoc.UTF8 as UTF8
@@ -149,24 +150,17 @@ convertWithOpts' scriptingEngine istty datadir opts = do
       Nothing -> case Format.formatFromFilePaths sources of
         Just f' -> return f'
         Nothing | sources == ["-"] -> return $ defFlavor "markdown"
-                | any (isURI . T.pack) sources -> return $ defFlavor "html"
                 | otherwise -> do
                     report $ CouldNotDeduceFormat
                       (map (T.pack . takeExtension) sources) "markdown"
                     return $ defFlavor "markdown"
 
   let makeSandboxed pureReader =
-        let files = maybe id (:) (optReferenceDoc opts) .
-                    maybe id (:) (optEpubMetadata opts) .
-                    maybe id (:) (optEpubCoverImage opts) .
-                    maybe id (:) (optCSL opts) .
-                    maybe id (:) (optCitationAbbreviations opts) $
-                    optEpubFonts opts ++
-                    optBibliography opts
-         in  case pureReader of
-               TextReader r -> TextReader $ \o t -> sandbox files (r o t)
-               ByteStringReader r
-                          -> ByteStringReader $ \o t -> sandbox files (r o t)
+       case pureReader of
+            TextReader r
+              -> TextReader $ \o t -> sandbox' opts (r o t)
+            ByteStringReader r
+              -> ByteStringReader $ \o t -> sandbox' opts (r o t)
 
   (reader, readerExts) <-
     if ".lua" `T.isSuffixOf` readerNameBase
@@ -297,8 +291,8 @@ convertWithOpts' scriptingEngine istty datadir opts = do
           >>= ( return . adjustMetadata (metadataFromFile <>)
             >=> return . adjustMetadata (<> optMetadata opts)
             >=> return . adjustMetadata (<> cslMetadata)
-            >=> applyTransforms transforms
             >=> applyFilters scriptingEngine filterEnv filters [T.unpack format]
+            >=> applyTransforms transforms
             >=> (if not (optSandbox opts) &&
                     (isJust (optExtractMedia opts)
                      || format == "docx") -- for fallback pngs
@@ -329,8 +323,12 @@ convertWithOpts' scriptingEngine istty datadir opts = do
                     | T.null t || T.last t /= '\n' = t <> T.singleton '\n'
                     | otherwise = t
               textOutput <- ensureNl <$> f writerOptions doc
-              if (optSelfContained opts || optEmbedResources opts) && htmlFormat format
-                 then TextOutput <$> makeSelfContained textOutput
+              if htmlFormat format &&
+                  (optSelfContained opts || optEmbedResources opts)
+                 then if optSandbox opts
+                         then sandbox' opts $
+                              TextOutput <$> makeSelfContained textOutput
+                         else TextOutput <$> makeSelfContained textOutput
                  else return $ TextOutput textOutput
   reports <- getLog
   return (output, reports)
@@ -340,8 +338,6 @@ data PandocOutput =
     | BinaryOutput BL.ByteString
     | ZipOutput BL.ByteString
   deriving (Show)
-
-type Transform = Pandoc -> Pandoc
 
 -- | Configure the common state
 configureCommonState :: PandocMonad m => Maybe FilePath -> Opt -> m ()
@@ -411,11 +407,6 @@ isTextFormat s = s `notElem` ["odt","docx","epub2","epub3","epub","pptx"]
 
 adjustMetadata :: (Meta -> Meta) -> Pandoc -> Pandoc
 adjustMetadata f (Pandoc meta bs) = Pandoc (f meta) bs
-
--- Transformations of a Pandoc document post-parsing:
-
-applyTransforms :: Monad m => [Transform] -> Pandoc -> m Pandoc
-applyTransforms transforms d = return $ foldr ($) d transforms
 
 writeFnBinary :: FilePath -> BL.ByteString -> IO ()
 writeFnBinary "-" = BL.putStr

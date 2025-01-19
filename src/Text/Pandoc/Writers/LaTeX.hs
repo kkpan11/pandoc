@@ -7,7 +7,7 @@
 {-# LANGUAGE ViewPatterns        #-}
 {- |
    Module      : Text.Pandoc.Writers.LaTeX
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -33,13 +33,14 @@ import Control.Monad
 import Data.Containers.ListUtils (nubOrd)
 import Data.Char (isDigit)
 import Data.List (intersperse, (\\))
-import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe, isNothing)
+import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe, isNothing,
+                   maybeToList)
 import Data.Monoid (Any (..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Network.URI (unEscapeString)
-import Text.DocTemplates (FromContext(lookupContext), renderTemplate)
-import Text.Collate.Lang (renderLang)
+import Text.DocTemplates (FromContext(lookupContext), Val(..), renderTemplate)
+import Text.Collate.Lang (renderLang, Lang(langLanguage))
 import Text.Pandoc.Class.PandocMonad (PandocMonad, report, toLang)
 import Text.Pandoc.Definition
 import Text.Pandoc.Highlighting (formatLaTeXBlock, formatLaTeXInline, highlight,
@@ -156,11 +157,15 @@ pandocToLaTeX options (Pandoc meta blocks) = do
                                           _               -> "article"
   when (documentClass `elem` chaptersClasses) $
      modify $ \s -> s{ stHasChapters = True }
-  case lookupContext "csquotes" (writerVariables options) `mplus`
-       (stringify <$> lookupMeta "csquotes" meta) of
-     Nothing      -> return ()
-     Just "false" -> return ()
-     Just _       -> modify $ \s -> s{stCsquotes = True}
+  let csquotes =
+        case lookupContext "csquotes" (writerVariables options) of
+          Just (BoolVal v) -> v
+          Just (SimpleVal (Text _ t)) -> t /= ("false" :: Text)
+          _ -> case stringify <$> lookupMeta "csquotes" meta of
+                  Nothing -> False
+                  Just "false" -> False
+                  Just _ -> True
+  when csquotes $ modify $ \s -> s{stCsquotes = True}
   let (blocks'', lastHeader) = if writerCiteMethod options == Citeproc then
                                  (blocks', [])
                                else case reverse blocks' of
@@ -175,7 +180,6 @@ pandocToLaTeX options (Pandoc meta blocks) = do
   titleMeta <- stringToLaTeX TextString $ stringify $ docTitle meta
   authorsMeta <- mapM (stringToLaTeX TextString . stringify) $ docAuthors meta
   -- we need a default here since lang is used in template conditionals
-  let otherLangs = [l | l <- docLangs, mblang /= Just l]
   let hasStringValue x = isJust (getField x metadata :: Maybe (Doc Text))
   let geometryFromMargins = mconcat $ intersperse ("," :: Doc Text) $
                             mapMaybe (\(x,y) ->
@@ -194,6 +198,8 @@ pandocToLaTeX options (Pandoc meta blocks) = do
                     $ lookupMetaInlines "nocite" meta
 
   let context  =  defField "toc" (writerTableOfContents options) $
+                  defField "lof" (writerListOfFigures options) $
+                  defField "lot" (writerListOfTables options) $
                   defField "toc-depth" (tshow
                                         (writerTOCDepth options -
                                               if stHasChapters st
@@ -251,15 +257,23 @@ pandocToLaTeX options (Pandoc meta blocks) = do
                           -> resetField "papersize" ("a" <> ds)
                       _   -> id)
                   metadata
+  let babelLang = mblang >>= toBabel
   let context' =
           -- note: lang is used in some conditionals in the template,
           -- so we need to set it if we have any babel/polyglossia:
           maybe id (\l -> defField "lang"
                       (literal $ renderLang l)) mblang
         $ maybe id (\l -> defField "babel-lang"
-                      (literal l)) (mblang >>= toBabel)
+                      (literal l)) babelLang
         $ defField "babel-otherlangs"
-             (map literal $ mapMaybe toBabel otherLangs)
+             (map literal
+               (nubOrd . catMaybes . filter (/= babelLang)
+                $ map toBabel docLangs))
+        $ defField "selnolig-langs"
+             (literal . T.intercalate "," $
+               let langs = docLangs ++ maybeToList mblang
+               in (["english" | any ((== "en") . langLanguage) langs] ++
+                   ["german" | any ((== "de") . langLanguage) langs]))
         $ defField "latex-dir-rtl"
            ((render Nothing <$> getField "dir" context) ==
                Just ("rtl" :: Text)) context
@@ -367,8 +381,9 @@ blockToLaTeX (Div (identifier,classes,kvs) bs) = do
      then modify $ \st -> st{ stIncremental = True }
      else when (beamer && "nonincremental" `elem` classes) $
              modify $ \st -> st { stIncremental = False }
-  result <- if identifier == "refs" || -- <- for backwards compatibility
-               "csl-bib-body" `elem` classes
+  result <- if (identifier == "refs" || -- <- for backwards compatibility
+                "csl-bib-body" `elem` classes) &&
+               (not (null bs))
                then do
                  modify $ \st -> st{ stHasCslRefs = True }
                  inner <- blockListToLaTeX bs
@@ -404,11 +419,18 @@ blockToLaTeX (Para [Str ".",Space,Str ".",Space,Str "."]) = do
      then blockToLaTeX (RawBlock "latex" "\\pause")
      else inlineListToLaTeX [Str ".",Space,Str ".",Space,Str "."]
 blockToLaTeX (Para lst) =
-  inlineListToLaTeX lst
+  if null lst
+     then do
+       opts <- gets stOptions
+       if isEnabled Ext_empty_paragraphs opts
+          then pure "\\hfill\\par"
+          else pure mempty
+     else inlineListToLaTeX lst
 blockToLaTeX (LineBlock lns) =
   blockToLaTeX $ linesToPara lns
 blockToLaTeX (BlockQuote lst) = do
   beamer <- gets stBeamer
+  csquotes <- liftM stCsquotes get
   case lst of
        [b] | beamer && isListBlock b -> do
          oldIncremental <- gets stIncremental
@@ -421,7 +443,10 @@ blockToLaTeX (BlockQuote lst) = do
          modify (\s -> s{stInQuote = True})
          contents <- blockListToLaTeX lst
          modify (\s -> s{stInQuote = oldInQuote})
-         return $ "\\begin{quote}" $$ contents $$ "\\end{quote}"
+         let envname = if csquotes then "displayquote" else "quote"
+         return $ ("\\begin" <> braces envname) $$
+                  contents $$
+                  ("\\end" <> braces envname)
 blockToLaTeX (CodeBlock (identifier,classes,keyvalAttr) str) = do
   opts <- gets stOptions
   inNote <- stInNote <$> get
@@ -505,14 +530,15 @@ blockToLaTeX (BulletList lst) = do
   isFirstInDefinition <- gets stIsFirstInDefinition
   beamer <- gets stBeamer
   let inc = if beamer && incremental then "[<+->]" else ""
-  items <- mapM listItemToLaTeX lst
+  items <- mapM (listItemToLaTeX False) lst
   let spacing = if isTightList lst
                    then text "\\tightlist"
                    else empty
-  return $ text ("\\begin{itemize}" <> inc) $$
+  return $ -- force list to start on new line if in a defn list
+             (if isFirstInDefinition then "\\hfill" else mempty) $$
+             text ("\\begin{itemize}" <> inc) $$
              spacing $$
              -- force list at beginning of definition to start on new line
-             (if isFirstInDefinition then "\\item[]" else mempty) $$
              vcat items $$
              "\\end{itemize}"
 blockToLaTeX (OrderedList _ []) = return empty -- otherwise latex error
@@ -522,7 +548,7 @@ blockToLaTeX (OrderedList (start, numstyle, numdelim) lst) = do
   let oldlevel = stOLLevel st
   isFirstInDefinition <- gets stIsFirstInDefinition
   put $ st {stOLLevel = oldlevel + 1}
-  items <- mapM listItemToLaTeX lst
+  items <- mapM (listItemToLaTeX True) lst
   modify (\s -> s {stOLLevel = oldlevel})
   let beamer = stBeamer st
   let tostyle x = case numstyle of
@@ -560,12 +586,12 @@ blockToLaTeX (OrderedList (start, numstyle, numdelim) lst) = do
   let spacing = if isTightList lst
                    then text "\\tightlist"
                    else empty
-  return $ text ("\\begin{enumerate}" <> inc)
+  return $ -- force list at beginning of definition to start on new line
+           (if isFirstInDefinition then "\\hfill" else mempty)
+         $$ text ("\\begin{enumerate}" <> inc)
          $$ stylecommand
          $$ resetcounter
          $$ spacing
-         -- force list at beginning of definition to start on new line
-         $$ (if isFirstInDefinition then "\\item[]" else mempty)
          $$ vcat items
          $$ "\\end{enumerate}"
 blockToLaTeX (DefinitionList []) = return empty
@@ -591,6 +617,7 @@ blockToLaTeX (Table attr blkCapt specs thead tbodies tfoot) =
   tableToLaTeX inlineListToLaTeX blockListToLaTeX
                (Ann.toTable attr blkCapt specs thead tbodies tfoot)
 blockToLaTeX (Figure (ident, _, _) captnode body) = do
+  opts <- gets stOptions
   (capt, captForLof, footnotes) <- getCaption inlineListToLaTeX True captnode
   lab <- labelFor ident
   let caption = "\\caption" <> captForLof <> braces capt <> lab
@@ -601,7 +628,10 @@ blockToLaTeX (Figure (ident, _, _) captnode body) = do
     [b] -> blockToLaTeX b
     bs  -> mconcat . intersperse (cr <> "\\hfill") <$>
            mapM (toSubfigure (length bs)) bs
-  let innards = "\\centering" $$ contents $$ caption <> cr
+  let innards = "\\centering" $$
+                (case writerFigureCaptionPosition opts of
+                  CaptionBelow -> contents $$ caption
+                  CaptionAbove -> caption $$ contents) <> cr
   modify $ \st ->
     st{ stInFigure = isSubfigure
       , stSubfigure = stSubfigure st || isSubfigure
@@ -645,27 +675,27 @@ blockListToLaTeX :: PandocMonad m => [Block] -> LW m (Doc Text)
 blockListToLaTeX lst =
   vsep `fmap` mapM (\b -> setEmptyLine True >> blockToLaTeX b) lst
 
-listItemToLaTeX :: PandocMonad m => [Block] -> LW m (Doc Text)
-listItemToLaTeX lst
+listItemToLaTeX :: PandocMonad m => Bool -> [Block] -> LW m (Doc Text)
+listItemToLaTeX isOrdered lst
   -- we need to put some text before a header if it's the first
   -- element in an item. This will look ugly in LaTeX regardless, but
   -- this will keep the typesetter from throwing an error.
   | (Header{} :_) <- lst =
     (text "\\item ~" $$) . nest 2 <$> blockListToLaTeX lst
-  | Plain (Str "☐":Space:is) : bs <- lst = taskListItem False is bs
-  | Plain (Str "☒":Space:is) : bs <- lst = taskListItem True  is bs
-  | Para  (Str "☐":Space:is) : bs <- lst = taskListItem False is bs
-  | Para  (Str "☒":Space:is) : bs <- lst = taskListItem True  is bs
+  | not isOrdered
+  , Just (checked, bs) <- toTaskListItem lst
+   = taskListItem checked bs
   | otherwise = (text "\\item" $$) . nest 2 <$> blockListToLaTeX lst
   where
-    taskListItem checked is bs = do
+    taskListItem checked bs = do
       let checkbox  = if checked
                       then "$\\boxtimes$"
                       else "$\\square$"
-      isContents <- inlineListToLaTeX is
-      bsContents <- blockListToLaTeX bs
-      return $ "\\item" <> brackets checkbox
-        $$ nest 2 (isContents $+$ bsContents)
+      let bs' = case bs of
+                  Plain ils : xs -> Para ils : xs
+                  _ -> bs
+      bsContents <- blockListToLaTeX bs'
+      return $ "\\item" <> brackets checkbox $$ nest 2 bsContents
 
 defListItemToLaTeX :: PandocMonad m => ([Inline], [[Block]]) -> LW m (Doc Text)
 defListItemToLaTeX (term, defs) = do
@@ -775,7 +805,8 @@ inlineListToLaTeX :: PandocMonad m
                   => [Inline]  -- ^ Inlines to convert
                   -> LW m (Doc Text)
 inlineListToLaTeX lst = hcat <$>
-  mapM inlineToLaTeX (fixLineInitialSpaces . fixInitialLineBreaks $ lst)
+  mapM inlineToLaTeX
+    (addKerns . fixLineInitialSpaces . fixInitialLineBreaks $ lst)
     -- nonbreaking spaces (~) in LaTeX don't work after line breaks,
     -- so we insert a strut: this is mostly used in verse.
  where fixLineInitialSpaces [] = []
@@ -790,6 +821,21 @@ inlineListToLaTeX lst = hcat <$>
          RawInline (Format "latex") "\\hfill\\break\n" :
            fixInitialLineBreaks xs
        fixInitialLineBreaks xs = xs
+       addKerns [] = []
+       addKerns (Str s : q@Quoted{} : rest)
+         | isQuote (T.takeEnd 1 s) =
+           Str s : RawInline (Format "latex") "\\," : addKerns (q:rest)
+       addKerns (q@Quoted{} : Str s : rest)
+         | isQuote (T.take 1 s) =
+           q : RawInline (Format "latex") "\\," : addKerns (Str s : rest)
+       addKerns (x:xs) = x : addKerns xs
+       isQuote "\"" = True
+       isQuote "'" = True
+       isQuote "\x2018" = True
+       isQuote "\x2019" = True
+       isQuote "\x201C" = True
+       isQuote "\x201D" = True
+       isQuote _ = False
 
 -- | Convert inline element to LaTeX
 inlineToLaTeX :: PandocMonad m
@@ -797,7 +843,7 @@ inlineToLaTeX :: PandocMonad m
               -> LW m (Doc Text)
 inlineToLaTeX (Span ("",["mark"],[]) lst) = do
   modify $ \st -> st{ stStrikeout = True } -- this gives us the soul package
-  inCmd "hl" <$> inlineListToLaTeX lst
+  inCmd "hl" <$> inSoulCommand (inlineListToLaTeX lst)
 inlineToLaTeX (Span (id',classes,kvs) ils) = do
   linkAnchor <- hypertarget id'
   lang <- toLang $ lookup "lang" kvs
@@ -835,16 +881,11 @@ inlineToLaTeX (Span (id',classes,kvs) ils) = do
 inlineToLaTeX (Emph lst) = inCmd "emph" <$> inlineListToLaTeX lst
 inlineToLaTeX (Underline lst) = do
   modify $ \st -> st{ stStrikeout = True } -- this gives us the soul package
-  inCmd "ul" <$> inlineListToLaTeX lst
+  inCmd "ul" <$> inSoulCommand (inlineListToLaTeX lst)
 inlineToLaTeX (Strong lst) = inCmd "textbf" <$> inlineListToLaTeX lst
 inlineToLaTeX (Strikeout lst) = do
-  -- we need to protect VERB in an mbox or we get an error
-  -- see #1294
-  -- with regular texttt we don't get an error, but we get
-  -- incorrect results if there is a space, see #5529
-  contents <- inlineListToLaTeX $ walk (concatMap protectCode) lst
   modify $ \s -> s{ stStrikeout = True }
-  return $ inCmd "st" contents
+  inCmd "st" <$> inSoulCommand (inlineListToLaTeX lst)
 inlineToLaTeX (Superscript lst) =
   inCmd "textsuperscript" <$> inlineListToLaTeX lst
 inlineToLaTeX (Subscript lst) =
@@ -865,6 +906,7 @@ inlineToLaTeX (Code (_,classes,kvs) str) = do
   opts <- gets stOptions
   inHeading <- gets stInHeading
   inItem <- gets stInItem
+  inSoul <- gets stInSoulCommand
   let listingsCode = do
         let listingsopts = (case getListingsLanguage classes of
                                 Just l  -> (("language", mbBraced l):)
@@ -913,7 +955,12 @@ inlineToLaTeX (Code (_,classes,kvs) str) = do
                  rawCode
                Right h -> modify (\st -> st{ stHighlighting = True }) >>
                           return (text (T.unpack h))
-  case () of
+  -- for soul commands we need to protect VERB in an mbox or we get an error
+  -- (see #1294). with regular texttt we don't get an error, but we get
+  -- incorrect results if there is a space (see #5529).
+  let inMbox x = "\\mbox" <> braces x
+  (if inSoul then inMbox else id) <$>
+   case () of
      _ | inHeading || inItem  -> rawCode  -- see #5574
        | writerListings opts  -> listingsCode
        | isJust (writerHighlightStyle opts) && not (null classes)
@@ -928,13 +975,21 @@ inlineToLaTeX (Quoted qt lst) = do
                DoubleQuote -> "\\enquote" <> braces contents
                SingleQuote -> "\\enquote*" <> braces contents
      else do
-       let s1 = if not (null lst) && isQuoted (head lst)
-                   then "\\,"
-                   else empty
-       let s2 = if not (null lst) && isQuoted (last lst)
-                   then "\\,"
-                   else empty
-       let inner = s1 <> contents <> s2
+       let endsWithQuote xs =
+             case reverse xs of
+                   Quoted{}:_ -> True
+                   Span _ ys : _ -> endsWithQuote ys
+                   Str s:_ -> T.takeEnd 1 s == "'"
+                   _ -> False
+       let beginsWithQuote xs =
+             case xs of
+                   Quoted{}:_ -> True
+                   Span _ ys : _ -> beginsWithQuote ys
+                   Str s:_ -> T.take 1 s == "`"
+                   _ -> False
+       let inner = (if beginsWithQuote lst then "\\," else mempty)
+                    <> contents
+                    <> (if endsWithQuote lst then "\\," else mempty)
        return $ case qt of
                 DoubleQuote ->
                    if isEnabled Ext_smart opts
@@ -944,19 +999,25 @@ inlineToLaTeX (Quoted qt lst) = do
                    if isEnabled Ext_smart opts
                       then char '`' <> inner <> char '\''
                       else char '\x2018' <> inner <> char '\x2019'
-    where
-      isQuoted (Span _ (x:_)) = isQuoted x
-      isQuoted (Quoted _ _)   = True
-      isQuoted _              = False
 inlineToLaTeX (Str str) = do
   setEmptyLine False
   liftM literal $ stringToLaTeX TextString str
 inlineToLaTeX (Math InlineMath str) = do
   setEmptyLine False
-  return $ "\\(" <> literal (handleMathComment str) <> "\\)"
+  inSoul <- gets stInSoulCommand
+  let contents = literal (handleMathComment str)
+  return $
+    if inSoul -- #9597
+       then "$" <> contents <> "$"
+       else "\\(" <> contents <> "\\)"
 inlineToLaTeX (Math DisplayMath str) = do
   setEmptyLine False
-  return $ "\\[" <> literal (handleMathComment str) <> "\\]"
+  inSoul <- gets stInSoulCommand
+  let contents = literal (handleMathComment str)
+  return $
+    if inSoul -- # 9597
+       then "$$" <> contents <> "$$"
+       else "\\[" <> contents <> "\\]"
 inlineToLaTeX il@(RawInline f str) = do
   beamer <- gets stBeamer
   if f == Format "latex" || f == Format "tex" ||
@@ -1029,7 +1090,7 @@ inlineToLaTeX (Image attr@(_,_,kvs) _ (source, _)) = do
                          Just (Percent a) ->
                            [d <> literal (showFl (a / 100)) <>
                              case dir of
-                                Width  -> "\\textwidth"
+                                Width  -> "\\linewidth"
                                 Height -> "\\textheight"
                            ]
                          Just dim         ->
@@ -1037,11 +1098,14 @@ inlineToLaTeX (Image attr@(_,_,kvs) _ (source, _)) = do
                          Nothing          ->
                            case dir of
                                 Width | isJust (dimension Height attr) ->
-                                  [d <> "\\textwidth"]
+                                  [d <> "\\linewidth"]
                                 Height | isJust (dimension Width attr) ->
                                   [d <> "\\textheight"]
                                 _ -> []
       optList = showDim Width <> showDim Height <>
+                (case (dimension Height attr, dimension Width attr) of
+                  (Just _, Just _) -> []
+                  _ -> ["keepaspectratio"]) <>
                 maybe [] (\x -> ["page=" <> literal x]) (lookup "page" kvs) <>
                 maybe [] (\x -> ["trim=" <> literal x]) (lookup "trim" kvs) <>
                 maybe [] (const ["clip"]) (lookup "clip" kvs)
@@ -1055,8 +1119,11 @@ inlineToLaTeX (Image attr@(_,_,kvs) _ (source, _)) = do
   inHeading <- gets stInHeading
   return $
     (if inHeading then "\\protect" else "") <>
-      (if isSVG then "\\includesvg" else "\\includegraphics") <>
-    options <> braces (literal source'')
+    (case dimension Width attr `mplus` dimension Height attr of
+       Just _ -> id
+       Nothing -> ("\\pandocbounded" <>) . braces)
+      ((if isSVG then "\\includesvg" else "\\includegraphics") <>
+        options <> braces (literal source''))
 inlineToLaTeX (Note contents) = do
   setEmptyLine False
   externalNotes <- gets stExternalNotes
@@ -1069,8 +1136,9 @@ inlineToLaTeX (Note contents) = do
   let noteContents = nest 2 contents' <> optnl
   beamer <- gets stBeamer
   -- in beamer slides, display footnote from current overlay forward
+  -- and ensure that the note is on the frame, not e.g. the column (#5769)
   let beamerMark = if beamer
-                      then text "<.->"
+                      then text "<.->[frame]"
                       else empty
   if externalNotes
      then do
@@ -1089,11 +1157,6 @@ handleMathComment s =
           Just ('\\', _) -> s
           _              -> s <> "\n"
         _                -> s
-
-protectCode :: Inline -> [Inline]
-protectCode x@(Code _ _) = [ltx "\\mbox{" , x , ltx "}"]
-  where ltx = RawInline (Format "latex")
-protectCode x = [x]
 
 setEmptyLine :: PandocMonad m => Bool -> LW m ()
 setEmptyLine b = modify $ \st -> st{ stEmptyLine = b }
@@ -1114,3 +1177,13 @@ extractInline _ _               = []
 -- Look up a key in an attribute and give a list of its values
 lookKey :: Text -> Attr -> [Text]
 lookKey key (_,_,kvs) =  maybe [] T.words $ lookup key kvs
+
+-- soul doesn't like \(..\) delimiters, so we change these to $ (#9597)
+-- when processing their contents.
+inSoulCommand :: PandocMonad m => LW m a -> LW m a
+inSoulCommand pa = do
+  oldInSoulCommand <- gets stInSoulCommand
+  modify $ \st -> st{ stInSoulCommand = True }
+  result <- pa
+  modify $ \st -> st{ stInSoulCommand = oldInSoulCommand }
+  pure result

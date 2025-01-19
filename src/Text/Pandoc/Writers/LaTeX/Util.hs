@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {- |
    Module      : Text.Pandoc.Writers.LaTeX.Util
-   Copyright   : Copyright (C) 2006-2023 John MacFarlane
+   Copyright   : Copyright (C) 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley.edu>
@@ -235,7 +235,7 @@ wrapDiv (_,classes,kvs) t = do
                                w = maybe "0.48" fromPct (lookup "width" kvs)
                            in  inCmd "begin" "column" <>
                                valign <>
-                               braces (literal w <> "\\textwidth")
+                               braces (literal w <> "\\linewidth")
                                $$ contents
                                $$ inCmd "end" "column"
                     else id

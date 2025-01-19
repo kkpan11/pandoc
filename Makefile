@@ -2,7 +2,7 @@ version?=$(shell grep '^[Vv]ersion:' pandoc.cabal | awk '{print $$2;}')
 pandoc-cli-version?=$(shell grep '^[Vv]ersion:' pandoc-cli/pandoc-cli.cabal | awk '{print $$2;}')
 SOURCEFILES?=$(shell git ls-tree -r main --name-only src pandoc-cli pandoc-server pandoc-lua-engine | grep "\.hs$$")
 PANDOCSOURCEFILES?=$(shell git ls-tree -r main --name-only src | grep "\.hs$$")
-DOCKERIMAGE=glcr.b-data.ch/ghc/ghc-musl:9.6
+DOCKERIMAGE=quay.io/benz0li/ghc-musl:9.6
 TIMESTAMP=$(shell date "+%Y%m%d_%H%M")
 LATESTBENCH=$(word 1,$(shell ls -t bench_*.csv 2>/dev/null))
 BASELINE?=$(LATESTBENCH)
@@ -19,18 +19,21 @@ REVISION?=1
 BENCHARGS?=--csv bench_$(TIMESTAMP).csv $(BASELINECMD) --timeout=6 +RTS -T --nonmoving-gc -RTS $(if $(PATTERN),--pattern "$(PATTERN)",)
 pandoc=$(shell cabal list-bin $(CABALOPTS) pandoc-cli)
 
-all: test build ## build executable and run tests
+all: build test binpath ## build executable and run tests
 .PHONY: all
 
 build: ## build executable
 	cabal build \
 	  --ghc-options='$(GHCOPTS)' \
 	  $(CABALOPTS) pandoc-cli
-	@cabal list-bin $(CABALOPTS) --ghc-options='$(GHCOPTS)' pandoc-cli
 .PHONY: build
 
+prof: ## build with profiling and optimizations
+	cabal build --enable-profiling all
+.PHONY: prof
+
 binpath: ## print path of built pandoc executable
-	@cabal list-bin $(CABALOPTS) pandoc-cli
+	@cabal list-bin $(CABALOPTS) --ghc-options='$(GHCOPTS)' pandoc-cli
 .PHONY: binpath
 
 ghcid: ## run ghcid
@@ -63,7 +66,7 @@ quick-stack: ## unoptimized build and tests with stack
 	  --test-arguments='-j4 --hide-successes --ansi-tricks=false $(TESTARGS)'
 .PHONY: quick-stack
 
-prerelease: README.md fix_spacing check-cabal check-stack checkdocs man check-version-sync check-changelog check-manversion uncommitted_changes ## prerelease checks
+prerelease: validate-epub README.md fix_spacing check-cabal check-stack checkdocs man check-version-sync check-changelog check-manversion uncommitted_changes ## prerelease checks
 .PHONY: prerelease
 
 uncommitted_changes:
@@ -235,6 +238,10 @@ update-website: ## update website and upload
 	make -C $(WEBSITE) upload
 .PHONY: update-website
 
+update-translations: ## update data/translations from Babel and Polyglossia
+	python tools/update-translations.py
+.PHONY: update-translations
+
 validate-docx-golden-tests: ## validate docx golden tests against schema
 	which xmllint || ("xmllint is required" && exit 1)
 	test -d ./docx-validator || \
@@ -252,12 +259,17 @@ validate-docx-golden-tests2: ## validate docx golden tests using OOXMLValidator
 	sh ./tools/validate-docx2.sh test/docx/golden/
 .PHONY: validate-docx-golden-tests2
 
-validate-epub: ## generate an epub and validate it with epubcheck
+validate-epub: ## generate an epub and validate it with epubcheck and ace
 	which epubcheck || exit 1
+	which ace || exit 1
 	tmp=$$(mktemp -d) && \
-	$(pandoc) test/epub/features.native -Mtitle="Features" --resource-path test/epub -o $$tmp/file.epub --number-sections --toc --quiet && \
-	echo $$tmp/file.epub && \
-	epubcheck $$tmp/file.epub
+  for epubver in 2 3; do \
+    file=$$tmp/ver$$epubver.epub ; \
+	  $(pandoc) test/epub/wasteland.epub --epub-cover=test/lalune.jpg -Mtitle="The Wasteland" --resource-path test/epub -t epub$$epubver -o $$file --number-sections --toc --quiet && \
+	  echo $$file && \
+	  epubcheck $$file || exit 1 ; \
+  done && \
+	ace $$tmp/ver3.epub -o ace-report-v2 --force
 
 modules.csv: $(PANDOCSOURCEFILES)
 	@rg '^import.*Text\.Pandoc\.' --with-filename $^ \

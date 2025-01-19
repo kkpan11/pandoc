@@ -388,7 +388,7 @@ parseBlock (Elem e) = do
                                   Just t -> read $ T.unpack t
                                   Nothing -> if isBook || n == 0 then n + 1 else n
                       headerText <- case filterChild (named "title") e of
-                                       Just t  -> case maybeAttrValue "supress" t of
+                                       Just t  -> case maybeAttrValue "suppress" t of
                                                      Just s -> if s == "no"
                                                                  then getInlines t
                                                                  else return mempty
@@ -757,7 +757,9 @@ blockFormula constructor e = do
                             filterChildren (named  "tex-math") whereToLook
                 mathMLs = map mathML $
                             filterChildren isMathML whereToLook
-            return . para . head . take 1 . map constructor $ texMaths ++ mathMLs
+            case texMaths ++ mathMLs of
+              [] -> return mempty
+              (m:_) -> return $ para (constructor m)
 
 mathML :: Element -> Text
 mathML x =

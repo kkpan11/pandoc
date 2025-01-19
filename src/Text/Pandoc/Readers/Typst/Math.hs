@@ -31,8 +31,6 @@ import Text.Pandoc.Readers.Typst.Parsing
     ( P, pTok, ignored, pWithContents, getField, chunks )
 import Typst.Types
 
--- import Debug.Trace
-
 withGroup :: [Exp] -> Exp
 withGroup [x] = x
 withGroup xs = EGrouped xs
@@ -91,6 +89,9 @@ handleMath tok =
       base <- getField "base" fields >>= pMathGrouped
       acc <- getField "accent" fields >>= pMathGrouped
       let acc' = case acc of
+            ESymbol _ "\8901" -> ESymbol Accent "\775" -- \dot
+            ESymbol _ "\168" -> ESymbol Accent "\776" -- \ddot
+            ESymbol _ "\8764" -> ESymbol Accent "\771" -- \tilde
             ESymbol _ t -> ESymbol Accent t
             _ -> acc
       pure $ EOver False base acc'
@@ -175,7 +176,7 @@ handleMath tok =
         <$> (getField "body" fields >>= pMathGrouped)
         <*> pure (ESymbol TUnder "_")
     Elt "math.overline" _ fields ->
-      EUnder False
+      EOver False
         <$> (getField "body" fields >>= pMathGrouped)
         <*> pure (ESymbol TOver "\175")
     Elt "math.underbrace" _ fields -> do
@@ -206,6 +207,20 @@ handleMath tok =
       case mbAnn of
         Nothing -> pure x
         Just ann -> EOver False x <$> pMathGrouped ann
+    Elt "math.underparen" _ fields -> do
+      mbAnn <- getField "annotation" fields
+      body <- getField "body" fields >>= pMathGrouped
+      let x = EUnder False body (ESymbol TUnder "\9181")
+      case mbAnn of
+        Nothing -> pure x
+        Just ann -> EUnder False x <$> pMathGrouped ann
+    Elt "math.overparen" _ fields -> do
+      mbAnn <- getField "annotation" fields
+      body <- getField "body" fields >>= pMathGrouped
+      let x = EOver False body (ESymbol TOver "\9180")
+      case mbAnn of
+        Nothing -> pure x
+        Just ann -> EOver False x <$> pMathGrouped ann
     Elt "math.scripts" _ fields -> getField "body" fields >>= pMathGrouped
     Elt "math.limits" _ fields -> getField "body" fields >>= pMathGrouped
     Elt "math.root" _ fields -> do
@@ -229,7 +244,7 @@ handleMath tok =
       pure $ EDelimited "\8968" "\8969" [Right body]
     Elt "math.norm" _ fields -> do
       body <- getField "body" fields >>= pMathGrouped
-      pure $ EDelimited "\8741" "\8741" [Right body]
+      pure $ EDelimited "\8214" "\8214" [Right body]
     Elt "math.round" _ fields -> do
       body <- getField "body" fields >>= pMathGrouped
       pure $ EDelimited "\8970" "\8969" [Right body]

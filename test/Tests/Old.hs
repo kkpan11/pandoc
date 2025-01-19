@@ -1,6 +1,6 @@
 {- |
    Module      : Tests.Old
-   Copyright   : © 2006-2023 John MacFarlane
+   Copyright   : © 2006-2024 John MacFarlane
    License     : GNU GPL, version 2 or above
 
    Maintainer  : John MacFarlane <jgm@berkeley@edu>
@@ -83,6 +83,11 @@ tests pandocPath =
     , test' "reader" ["-r", "textile", "-w", "native", "-s"]
       "textile-reader.textile" "textile-reader.native"
     ]
+  , testGroup "djot"
+    [ testGroup "writer" $ writerTests' "djot"
+    , test' "reader" ["-f", "djot", "-t" ,"native", "-s"]
+       "djot-reader.djot" "djot-reader.native"
+    ]
   , testGroup "docbook"
     [ testGroup "writer" $ writerTests' "docbook4"
     , test' "reader" ["-r", "docbook", "-w", "native", "-s"]
@@ -163,11 +168,11 @@ tests pandocPath =
     [ test' "reader" ["-r", "t2t", "-w", "native", "-s"]
         "txt2tags.t2t" "txt2tags.native" ]
   , testGroup "epub" [
-      test' "features" ["-r", "epub", "-w", "native"]
+      test' "features" ["-r", "epub", "-w", "native", "-s"]
         "epub/features.epub" "epub/features.native"
-    , test' "wasteland" ["-r", "epub", "-w", "native"]
+    , test' "wasteland" ["-r", "epub", "-w", "native", "-s"]
         "epub/wasteland.epub" "epub/wasteland.native"
-    , test' "formatting" ["-r", "epub", "-w", "native"]
+    , test' "formatting" ["-r", "epub", "-w", "native", "-s"]
         "epub/formatting.epub" "epub/formatting.native"
     ]
   , testGroup "twiki"
@@ -194,7 +199,7 @@ tests pandocPath =
     [ testGroup "writer" $ writerTests' "ms"
     ]
   , testGroup "typst"
-    [ testGroup "writer" $ writerTests' "typst"
+    [ testGroup "writer" $ writerTests' "typst" ++ extWriterTests' "typst"
     , testGroup "reader"
        [ test' "typst-reader" ["-r", "typst", "-w", "native", "-s"]
           "typst-reader.typ" "typst-reader.native"
@@ -237,6 +242,14 @@ tests pandocPath =
       "ipynb/rank.ipynb" "ipynb/rank.out.html"
     ]
   , testGroup "markua" [ testGroup "writer" $ writerTests' "markua"]
+  , testGroup "ansi"
+      [ test' "ansi" ["-f", "markdown", "-t", "ansi"]
+        "ansi-test.txt" "ansi-test.ansi"
+      ]
+  , testGroup "pod"
+      [ test' "pod" ["-f", "pod", "-t", "native"]
+        "pod-reader.pod" "pod-reader.native"
+      ]
   ]
  where
     test'           = test pandocPath
@@ -259,7 +272,7 @@ lhsWriterTests pandocPath format
     ]
   where
     t n f = test pandocPath
-             n ["--wrap=preserve", "-r", "native", "-s",
+             n ["--wrap=preserve", "-r", "native",
               "--markdown-headings=setext", "-w", f]
              "lhs-test.native" ("lhs-test" <.> f)
 
